@@ -11,9 +11,9 @@
           ]
         }
       },
-      "id": "13107761-986f-488b-87d2-cf316922dcd2",
+      "id": "REDACTED",
       "name": "Schedule Trigger",
-      "type": "n8n-nodes-base.scheduleTrigger",
+      "type": "REDACTED",
       "position": [
         992,
         320
@@ -34,9 +34,9 @@
         },
         "options": {}
       },
-      "id": "162b88da-e309-4f4b-897d-2775411e0591",
+      "id": "REDACTED",
       "name": "r/jobs — Top Posts",
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "REDACTED",
       "position": [
         1232,
         96
@@ -58,9 +58,9 @@
         },
         "options": {}
       },
-      "id": "ab2bb5b1-19b4-4c83-ac32-3d991aab8af2",
+      "id": "REDACTED",
       "name": "r/careerguidance — Top Posts",
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "REDACTED",
       "position": [
         1232,
         256
@@ -82,9 +82,9 @@
         },
         "options": {}
       },
-      "id": "c3b5ae67-446a-4cae-a713-a9fe05d27905",
+      "id": "REDACTED",
       "name": "r/cscareerquestions — Top Posts",
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "REDACTED",
       "position": [
         1232,
         416
@@ -106,9 +106,9 @@
         },
         "options": {}
       },
-      "id": "801bd0a8-bdf6-4387-a11a-93049e9fff41",
+      "id": "REDACTED",
       "name": "r/resumes — Top Posts",
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "REDACTED",
       "position": [
         1232,
         576
@@ -120,7 +120,7 @@
       "parameters": {
         "numberInputs": 4
       },
-      "id": "11f6754a-d595-43ea-af05-5bcbe17a715b",
+      "id": "REDACTED",
       "name": "Merge All Subreddits",
       "type": "n8n-nodes-base.merge",
       "position": [
@@ -133,7 +133,7 @@
       "parameters": {
         "jsCode": "// Step 1: Flatten Reddit .json top posts into clean post objects\nconst results = [];\n\nfor (const item of $input.all()) {\n  const json = item.json;\n  if (!json.data || !json.data.children) continue;\n\n  for (const child of json.data.children) {\n    const post = child.data;\n    if (!post || !post.title) continue;\n    if (post.selftext === '[removed]' || post.selftext === '[deleted]') continue;\n\n    results.push({\n      json: {\n        subreddit: post.subreddit || '',\n        post_id: post.id || '',\n        title: post.title || '',\n        text: post.selftext || '',\n        score: post.score || 0,\n        num_comments: post.num_comments || 0,\n        permalink: post.permalink || '',\n        comments_url: `https://www.reddit.com${post.permalink}.json?limit=5&sort=top`\n      }\n    });\n  }\n}\n\n// Sort by score so highest upvoted posts are processed first\nresults.sort((a, b) => b.json.score - a.json.score);\n\nreturn results;"
       },
-      "id": "e3b5951b-4347-41c5-9e8f-df23bdd31cab",
+      "id": "REDACTED",
       "name": "Flatten Posts",
       "type": "n8n-nodes-base.code",
       "position": [
@@ -157,9 +157,9 @@
         },
         "options": {}
       },
-      "id": "29299b2f-46ee-4700-b044-64d08b8ca8a9",
+      "id": "REDACTED",
       "name": "Fetch Top Comments",
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "REDACTED",
       "position": [
         1920,
         336
@@ -171,7 +171,7 @@
       "parameters": {
         "jsCode": "// Step 2: Extract top comments from the comments .json response\n// Reddit comments endpoint returns [postData, commentsData] as a 2-element array\nconst results = [];\n\nfor (const item of $input.all()) {\n  const json = item.json;\n\n  // The response is an array: [0] = post, [1] = comments listing\n  // When n8n fetches it, json might be the array directly or wrapped\n  let postData = null;\n  let commentsListing = null;\n\n  if (Array.isArray(json)) {\n    postData = json[0]?.data?.children?.[0]?.data;\n    commentsListing = json[1]?.data?.children || [];\n  } else {\n    // fallback: sometimes n8n wraps it\n    continue;\n  }\n\n  if (!postData) continue;\n\n  // Extract top comments (skip stickied mod comments)\n  const topComments = commentsListing\n    .filter(c => c.kind === 't1' && !c.data?.stickied && c.data?.body && c.data.body !== '[deleted]' && c.data.body !== '[removed]')\n    .slice(0, 5)\n    .map(c => c.data.body.substring(0, 300)); // cap each comment at 300 chars\n\n  results.push({\n    json: {\n      subreddit: postData.subreddit || '',\n      title: postData.title || '',\n      post_text: postData.selftext || '',\n      score: postData.score || 0,\n      num_comments: postData.num_comments || 0,\n      url: `https://reddit.com${postData.permalink}`,\n      top_comments: topComments\n    }\n  });\n}\n\nreturn results;"
       },
-      "id": "1754c8f8-e6ef-4f54-bc4e-514aa8e1377a",
+      "id": "REDACTED",
       "name": "Extract Comments",
       "type": "n8n-nodes-base.code",
       "position": [
@@ -190,7 +190,7 @@
           "systemMessage": "You are a career content research analyst. You receive a Reddit post (title + body) along with its top comments. Your job is to extract structured insights for career content creation.\n\nAnalyze both the post AND the comments together — comments often reveal the real pain points and opinions that the post itself doesn't show.\n\nExtract the following:\n1. Summary: One neutral sentence (≤20 words) describing what this post and thread is about.\n2. Pain point: The core problem or frustration expressed — from the poster's OR commenters' perspective. ≤15 words. First person style (e.g. 'Getting ghosted after final round interviews...').\n3. Community sentiment: What is the overall tone of the comments? One of: Frustrated | Hopeful | Mixed | Supportive | Skeptical\n4. Top insight from comments: The most useful or surprising thing said in the comments. ≤20 words.\n5. Content angles: 2–3 actionable content ideas that directly address the pain point. Each ≤10 words.\n\nOutput valid JSON only. No markdown, no commentary. Match the schema exactly."
         }
       },
-      "id": "da7d5e79-7ace-4795-bb2a-d4250aa2cfa8",
+      "id": "REDACTED",
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "position": [
@@ -208,27 +208,21 @@
         },
         "options": {}
       },
-      "id": "9aea8df7-7caf-42ca-a429-8b0d9b900c66",
+      "id": "REDACTED",
       "name": "OpenAI Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "position": [
         2320,
         656
       ],
-      "typeVersion": 1.2,
-      "credentials": {
-        "openAiApi": {
-          "id": "kbW25iDU5jvZPvDH",
-          "name": "OpenAi account"
-        }
-      }
+      "typeVersion": 1.2
     },
     {
       "parameters": {
         "jsonSchemaExample": "{\n  \"summary\": \"<1 sentence, ≤20 words, neutral overview of post + thread>\",\n  \"pain_point\": \"<1 sentence, ≤15 words, core frustration from post or comments>\",\n  \"community_sentiment\": \"<one of: Frustrated | Hopeful | Mixed | Supportive | Skeptical>\",\n  \"top_comment_insight\": \"<most useful/surprising thing said in comments, ≤20 words>\",\n  \"content_angle\": [\n    \"<idea 1: ≤10 words>\",\n    \"<idea 2: ≤10 words>\",\n    \"<idea 3: ≤10 words, optional>\"\n  ]\n}",
         "autoFix": true
       },
-      "id": "31aaa7c9-eca2-4c17-90ae-8e73d838e1f6",
+      "id": "REDACTED",
       "name": "Structured Output Parser",
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "position": [
@@ -242,7 +236,7 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "1TauiEkw7bl2yk2SPVpn6fW0ktplqxeME1UtqbMaPQI8",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Career Topics",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TauiEkw7bl2yk2SPVpn6fW0ktplqxeME1UtqbMaPQI8/edit?usp=drivesdk"
@@ -338,20 +332,14 @@
           "useAppend": true
         }
       },
-      "id": "37afd01d-497f-4979-ac16-e25fcd16c0d8",
+      "id": "REDACTED",
       "name": "Save to Google Sheets",
-      "type": "n8n-nodes-base.googleSheets",
+      "type": "REDACTED",
       "position": [
         2816,
         336
       ],
-      "typeVersion": 4.7,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "KXw7mOPSGBu1qOjG",
-          "name": "Google Sheets account"
-        }
-      }
+      "typeVersion": 4.7
     },
     {
       "parameters": {
@@ -359,9 +347,9 @@
         "height": 1000,
         "width": 820
       },
-      "id": "f0c71aeb-3277-471d-8e47-e0afb5066444",
+      "id": "REDACTED",
       "name": "Sticky Note",
-      "type": "n8n-nodes-base.stickyNote",
+      "type": "REDACTED",
       "position": [
         112,
         -192
@@ -529,10 +517,10 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "a0cfbdfb-bb92-431f-add2-63f33eba107d",
+  "versionId": "REDACTED",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "cb0154973bcd92f7ef5547aed2efb328b5df5bb198f16b309c8561141355ab93"
+    "instanceId": "REDACTED"
   },
   "id": "X9YQ8UavxMiD0cXO",
   "tags": []

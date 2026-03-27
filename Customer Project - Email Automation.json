@@ -11,9 +11,9 @@
           ]
         }
       },
-      "id": "83f0ec3b-420a-4d54-831a-f373d5cdbb4b",
+      "id": "REDACTED",
       "name": "Daily Schedule Trigger",
-      "type": "n8n-nodes-base.scheduleTrigger",
+      "type": "REDACTED",
       "typeVersion": 1.2,
       "position": [
         -1344,
@@ -25,7 +25,7 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Email Testing",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit?usp=drivesdk"
@@ -39,20 +39,14 @@
         },
         "options": {}
       },
-      "id": "6c4dd0d0-c83f-4edb-b258-c433db5cb9fa",
+      "id": "REDACTED",
       "name": "Read All Customer Rows",
-      "type": "n8n-nodes-base.googleSheets",
+      "type": "REDACTED",
       "typeVersion": 4.4,
       "position": [
         -1120,
         512
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "KXw7mOPSGBu1qOjG",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -87,7 +81,7 @@
         },
         "options": {}
       },
-      "id": "0bb0dbb4-7250-4b8d-8996-9df2da7b921b",
+      "id": "REDACTED",
       "name": "Filter Empty Rows",
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2,
@@ -148,7 +142,7 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "f18cade8-ff1e-4c59-af6b-2bd2a910dbea",
+      "id": "REDACTED",
       "name": "Calculate Date Variables",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -218,7 +212,7 @@
         "looseTypeValidation": true,
         "options": {}
       },
-      "id": "4d401a02-bc4d-4004-a71a-cfdbca544b39",
+      "id": "REDACTED",
       "name": "Is T+3 Email Due?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.1,
@@ -231,9 +225,9 @@
       "parameters": {
         "options": {}
       },
-      "id": "bb8f9186-749f-4e29-82ea-e39bd9129c51",
+      "id": "REDACTED",
       "name": "Loop T+3 (1 at a time)",
-      "type": "n8n-nodes-base.splitInBatches",
+      "type": "REDACTED",
       "typeVersion": 3,
       "position": [
         -224,
@@ -244,7 +238,7 @@
       "parameters": {
         "amount": 20
       },
-      "id": "cceec1f9-f475-43cc-af20-5391cccaa09a",
+      "id": "REDACTED",
       "name": "Wait (T+3)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -252,14 +246,14 @@
         0,
         0
       ],
-      "webhookId": "334a584b-d7a3-40ee-8d1c-0cf9566996b0"
+      "webhookId": "REDACTED"
     },
     {
       "parameters": {
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Email Testing",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit?usp=drivesdk"
@@ -415,20 +409,14 @@
         },
         "options": {}
       },
-      "id": "f910e5b7-cb8f-4f9e-8c55-44b808b9a19a",
+      "id": "REDACTED",
       "name": "Mark T+3 Email Sent",
-      "type": "n8n-nodes-base.googleSheets",
+      "type": "REDACTED",
       "typeVersion": 4.4,
       "position": [
         448,
         80
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "KXw7mOPSGBu1qOjG",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -498,7 +486,7 @@
         },
         "options": {}
       },
-      "id": "fde3781a-7e95-42fc-8b83-a9f4c424000d",
+      "id": "REDACTED",
       "name": "Is T+5 Email Due?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.1,
@@ -512,9 +500,9 @@
       "parameters": {
         "options": {}
       },
-      "id": "c931aa5e-e972-494d-a425-5fed688b44cd",
+      "id": "REDACTED",
       "name": "Loop T+5 (1 at a time)",
-      "type": "n8n-nodes-base.splitInBatches",
+      "type": "REDACTED",
       "typeVersion": 3,
       "position": [
         -224,
@@ -525,7 +513,7 @@
       "parameters": {
         "amount": 20
       },
-      "id": "71eb30ff-13e3-4ad4-8dcf-e341edffaa09",
+      "id": "REDACTED",
       "name": "Wait (T+5)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -533,14 +521,14 @@
         0,
         288
       ],
-      "webhookId": "469b4712-e794-4ec7-be6b-69f44bcec440"
+      "webhookId": "REDACTED"
     },
     {
       "parameters": {
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Email Testing",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit?usp=drivesdk"
@@ -696,20 +684,14 @@
         },
         "options": {}
       },
-      "id": "4f439ae9-6767-422c-9ff0-022aa19e898c",
+      "id": "REDACTED",
       "name": "Mark T+5 Email Sent",
-      "type": "n8n-nodes-base.googleSheets",
+      "type": "REDACTED",
       "typeVersion": 4.4,
       "position": [
         448,
         368
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "KXw7mOPSGBu1qOjG",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -748,7 +730,7 @@
               }
             },
             {
-              "id": "26113871-d5ad-44ab-93ff-5bff9d148560",
+              "id": "REDACTED",
               "leftValue": "={{ $json['T3_Email_Sent'] }}",
               "rightValue": "YES",
               "operator": {
@@ -758,7 +740,7 @@
               }
             },
             {
-              "id": "38ce570c-c705-4bcc-913b-0c26f2934283",
+              "id": "REDACTED",
               "leftValue": "={{ $json['T5_Email_Sent'] }}",
               "rightValue": "YES",
               "operator": {
@@ -772,7 +754,7 @@
         },
         "options": {}
       },
-      "id": "052959db-f61b-4ba9-94d0-db9067c26cd1",
+      "id": "REDACTED",
       "name": "Is Feedback Email Due?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.1,
@@ -786,9 +768,9 @@
       "parameters": {
         "options": {}
       },
-      "id": "f06890d6-ce41-4d17-840d-40e82cbfd29b",
+      "id": "REDACTED",
       "name": "Loop Feedback (1 at a time)",
-      "type": "n8n-nodes-base.splitInBatches",
+      "type": "REDACTED",
       "typeVersion": 3,
       "position": [
         -224,
@@ -799,7 +781,7 @@
       "parameters": {
         "amount": 20
       },
-      "id": "1728dae2-3a4e-422a-90bb-92a4a89b7f4d",
+      "id": "REDACTED",
       "name": "Wait (Feedback)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -807,14 +789,14 @@
         0,
         576
       ],
-      "webhookId": "2f95ff4c-a73c-4238-a904-c5704f4d6843"
+      "webhookId": "REDACTED"
     },
     {
       "parameters": {
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Email Testing",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit?usp=drivesdk"
@@ -969,20 +951,14 @@
         },
         "options": {}
       },
-      "id": "6991dc27-afca-4ef4-890f-db8d2c1b38e0",
+      "id": "REDACTED",
       "name": "Mark Feedback Email Sent",
-      "type": "n8n-nodes-base.googleSheets",
+      "type": "REDACTED",
       "typeVersion": 4.4,
       "position": [
         448,
         656
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "KXw7mOPSGBu1qOjG",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -1052,7 +1028,7 @@
         },
         "options": {}
       },
-      "id": "7b421b81-2400-415e-84f5-8a9a20a05171",
+      "id": "REDACTED",
       "name": "Is Upsell Email Due?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.1,
@@ -1065,9 +1041,9 @@
       "parameters": {
         "options": {}
       },
-      "id": "ed2a0872-4f29-4321-bfb9-50668083d660",
+      "id": "REDACTED",
       "name": "Loop Upsell (1 at a time)",
-      "type": "n8n-nodes-base.splitInBatches",
+      "type": "REDACTED",
       "typeVersion": 3,
       "position": [
         -224,
@@ -1078,7 +1054,7 @@
       "parameters": {
         "amount": 20
       },
-      "id": "3739fe91-95be-486d-abb8-3bea53128a3b",
+      "id": "REDACTED",
       "name": "Wait (Upsell)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -1086,14 +1062,14 @@
         0,
         864
       ],
-      "webhookId": "99e11307-6790-4003-bc46-b041e70d8917"
+      "webhookId": "REDACTED"
     },
     {
       "parameters": {
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Email Testing",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit?usp=drivesdk"
@@ -1248,20 +1224,14 @@
         },
         "options": {}
       },
-      "id": "a03ab711-e04d-4224-88d8-8493f16ef76f",
+      "id": "REDACTED",
       "name": "Mark Upsell Email Sent",
-      "type": "n8n-nodes-base.googleSheets",
+      "type": "REDACTED",
       "typeVersion": 4.4,
       "position": [
         448,
         944
       ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "KXw7mOPSGBu1qOjG",
-          "name": "Google Sheets account"
-        }
-      },
       "notes": "Sets Status = All Done after upsell — stops all future checks for this customer."
     },
     {
@@ -1276,20 +1246,14 @@
         "htmlbody": "=<html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;color:#333\">\n<h2 style=\"color:#2c5f9e\">Hi {{ $json['Customer Name'] }},</h2>\n<p>We hope you're doing well! Here's a quick update on your <strong>{{ $json['Project Type'] }}</strong> project.</p>\n<p>🔧 <strong>Day 3 Update:</strong> Our team is deep in the research and drafting phase — making sure every detail reflects your unique skills and experience.</p>\n<ul>\n<li>Reviewing your background and goals</li>\n<li>Crafting compelling, ATS-optimized content</li>\n<li>Aligning your profile with industry standards</li>\n</ul>\n<p>If you have any additional info to share (achievements, certifications etc.), feel free to reply to this email!</p>\n<p>Estimated completion is just around the corner. Stay tuned! 🎯</p>\n<br/><p>Warm regards,</p><p><strong>The [Your Company] Team</strong></p>\n<hr style=\"border:none;border-top:1px solid #eee\"/>\n<p style=\"font-size:11px;color:#999\">You're receiving this because you have an active project with us.</p>\n</body></html>",
         "attachment": {}
       },
-      "id": "7edcab16-d0dd-4d4f-bf2d-596d41b67a2f",
+      "id": "REDACTED",
       "name": "Send T+3 Update Email",
-      "type": "n8n-nodes-zohozeptomail.zohoZeptomail",
+      "type": "REDACTED",
       "typeVersion": 1,
       "position": [
         224,
         0
-      ],
-      "credentials": {
-        "zohoZeptomailOAuth2Api": {
-          "id": "HePfA7nNDatRJLsa",
-          "name": "Zoho ZeptoMail account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -1303,20 +1267,14 @@
         "htmlbody": "=<html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;color:#333\">\n<h2 style=\"color:#2c5f9e\">Hi {{ $json['Customer Name'] }},</h2>\n<p>Great news — your <strong>{{ $json['Project Type'] }}</strong> project is well underway and results are taking shape!</p>\n<p>📌 <strong>Day 5 Update:</strong> We're now in the final refinement stage — polishing the language, optimizing for recruiter attention, and tailoring everything to your goals.</p>\n<ul>\n<li>✅ Draft content completed</li>\n<li>✅ ATS keyword optimization done</li>\n<li>🔄 Final quality review in progress</li>\n</ul>\n<p>You'll receive the final deliverable very shortly. We can't wait for you to see it!</p>\n<p>If there's anything specific you'd like adjusted, just reply to this email.</p>\n<br/><p>Best,</p><p><strong>The [Your Company] Team</strong></p>\n<hr style=\"border:none;border-top:1px solid #eee\"/>\n<p style=\"font-size:11px;color:#999\">You're receiving this because you have an active project with us.</p>\n</body></html>",
         "attachment": {}
       },
-      "id": "34041c9a-4a65-441c-873f-5963458eedb9",
+      "id": "REDACTED",
       "name": "Send T+5 Update Email",
-      "type": "n8n-nodes-zohozeptomail.zohoZeptomail",
+      "type": "REDACTED",
       "typeVersion": 1,
       "position": [
         224,
         288
-      ],
-      "credentials": {
-        "zohoZeptomailOAuth2Api": {
-          "id": "HePfA7nNDatRJLsa",
-          "name": "Zoho ZeptoMail account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -1330,20 +1288,14 @@
         "htmlbody": "=<html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;color:#333\">\n<h2 style=\"color:#27ae60\">Hi {{ $json['Customer Name'] }}, your project is complete! 🎉</h2>\n<p>We're thrilled to let you know that your <strong>{{ $json['Project Type'] }}</strong> project has been finalized and delivered. It was a pleasure working with you!</p>\n<p>We'd love to hear your thoughts — it only takes 1 minute and helps us serve our clients better.</p>\n<div style=\"text-align:center;margin:30px 0\">\n<a href=\"YOUR_FEEDBACK_FORM_LINK\" style=\"background-color:#27ae60;color:white;padding:14px 28px;text-decoration:none;border-radius:6px;font-size:16px;font-weight:bold\">⭐ Leave Your Feedback</a>\n</div>\n<p>Thank you for trusting us with your career journey! 🚀</p>\n<br/><p>With gratitude,</p><p><strong>The [Your Company] Team</strong></p>\n<hr style=\"border:none;border-top:1px solid #eee\"/>\n<p style=\"font-size:11px;color:#999\">Reply to this email if you have any questions about your deliverable.</p>\n</body></html>",
         "attachment": {}
       },
-      "id": "3071bfa3-e727-4c33-a3cb-f236d3501c3c",
+      "id": "REDACTED",
       "name": "Send Feedback Request Email",
-      "type": "n8n-nodes-zohozeptomail.zohoZeptomail",
+      "type": "REDACTED",
       "typeVersion": 1,
       "position": [
         224,
         576
-      ],
-      "credentials": {
-        "zohoZeptomailOAuth2Api": {
-          "id": "HePfA7nNDatRJLsa",
-          "name": "Zoho ZeptoMail account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -1357,35 +1309,14 @@
         "htmlbody": "=<html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;color:#333\">\n<h2 style=\"color:#8e44ad\">Hi {{ $json['Customer Name'] }},</h2>\n<p>It's been a few days since we wrapped up your <strong>{{ $json['Project Type'] }}</strong> project — we hope it's already opening doors for you!</p>\n<p>We wanted to share some premium services that could take your career even further:</p>\n<table style=\"width:100%;border-collapse:collapse;margin:20px 0\">\n<tr style=\"background-color:#f4f0ff\"><td style=\"padding:12px;border:1px solid #ddd;font-weight:bold\">🔵 LinkedIn Optimization</td><td style=\"padding:12px;border:1px solid #ddd\">3x more recruiter views</td></tr>\n<tr><td style=\"padding:12px;border:1px solid #ddd;font-weight:bold\">🟣 Cover Letter Bundle</td><td style=\"padding:12px;border:1px solid #ddd\">Custom letters for your top 5 roles</td></tr>\n<tr style=\"background-color:#f4f0ff\"><td style=\"padding:12px;border:1px solid #ddd;font-weight:bold\">🟢 Interview Prep Session</td><td style=\"padding:12px;border:1px solid #ddd\">1-on-1 mock interview coaching</td></tr>\n<tr><td style=\"padding:12px;border:1px solid #ddd;font-weight:bold\">🟡 Job Application Strategy</td><td style=\"padding:12px;border:1px solid #ddd\">Customized job hunt roadmap</td></tr>\n</table>\n<p>As a returning client, use code <strong>RETURN15</strong> for an exclusive <strong>15% discount</strong>. Offer valid for 7 days.</p>\n<div style=\"text-align:center;margin:30px 0\">\n<a href=\"YOUR_BOOKING_LINK\" style=\"background-color:#8e44ad;color:white;padding:14px 28px;text-decoration:none;border-radius:6px;font-size:16px;font-weight:bold\">🚀 Explore Premium Services</a>\n</div>\n<br/><p>Cheering you on,</p><p><strong>The [Your Company] Team</strong></p>\n<hr style=\"border:none;border-top:1px solid #eee\"/>\n<p style=\"font-size:11px;color:#999\">To unsubscribe, reply with 'Unsubscribe'.</p>\n</body></html>",
         "attachment": {}
       },
-      "id": "5b5f1c77-4de9-4c7b-95c5-bc4ca2350f4c",
+      "id": "REDACTED",
       "name": "Send Upsell Email1",
-      "type": "n8n-nodes-zohozeptomail.zohoZeptomail",
+      "type": "REDACTED",
       "typeVersion": 1,
       "position": [
         224,
         864
-      ],
-      "credentials": {
-        "zohoZeptomailOAuth2Api": {
-          "id": "HePfA7nNDatRJLsa",
-          "name": "Zoho ZeptoMail account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "content": "# Email Automation\n\n📄 [Google Sheet](https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit?gid=0#gid=0)\n\n---\n## 📽️[Workflow Walkthorugh](https://drive.google.com/file/d/1VwfLGBziRtR-81ol3frblt-0wvUe7afy/view?usp=sharing)\n\n---\n## Sheet Columns\n**You fill:** Client Name, Email, Start Date, Project Status (`Active` / `Complete`)\n**Auto-filled:** Last Email Sent, Last Email Date, Feedback Email Sent, Upsell Email Sent\n---\n\n## Setup\n1. Import workflow into n8n\n2. Connect Google Sheets + ZeptoMail credentials\n3. Select your sheet in the Google Sheets node\n4. Activate\n\n---\n## Customise\n- Schedule time → edit Schedule node\n- Email content → edit each Send Email node\n- Replace: `[Your Company]`, `YOUR_FEEDBACK_FORM_LINK`, `YOUR_BOOKING_LINK`, discount code",
-        "height": 656,
-        "width": 992
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        -1568,
-        -176
-      ],
-      "typeVersion": 1,
-      "id": "561471e9-1045-4f74-82c8-7b9cdd1dbaaa",
-      "name": "Sticky Note"
+      ]
     }
   ],
   "pinData": {},
@@ -1684,10 +1615,10 @@
     "availableInMCP": false,
     "timezone": "Asia/Kolkata"
   },
-  "versionId": "095cd6ec-a103-49e4-875a-ffb303760fed",
+  "versionId": "REDACTED",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "cb0154973bcd92f7ef5547aed2efb328b5df5bb198f16b309c8561141355ab93"
+    "instanceId": "REDACTED"
   },
   "id": "3ue8IEw4v0ES1KSc",
   "tags": []

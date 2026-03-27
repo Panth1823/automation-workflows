@@ -12,13 +12,13 @@
         "jsonBody": "={\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"avatar\",\n        \"avatar_id\": \"4185302635fa4de29a99ad8ca17475bc\"\n      },\n      \"voice\": {\n        \"type\": \"text\",\n        \"input_text\": \"{{ $json.Script }}\",\n        \"voice_id\": \"d7f0f1713ccd458790d6cffb41ad27e2\"\n      }\n    }\n  ],\n  \"dimension\": {\n    \"width\": 720,\n    \"height\": 1280\n  }\n}",
         "options": {}
       },
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "REDACTED",
       "typeVersion": 4.3,
       "position": [
         -896,
         24
       ],
-      "id": "cfc8bd52-891c-459f-8efa-8e2bda22eed0",
+      "id": "REDACTED",
       "name": "Generate Video"
     },
     {
@@ -31,9 +31,9 @@
         -448,
         24
       ],
-      "id": "7b5d2f73-4f18-4a2e-a5b8-6ac382507859",
+      "id": "REDACTED",
       "name": "Wait",
-      "webhookId": "2b3cee80-6385-4f65-acfd-a2e469662e32"
+      "webhookId": "REDACTED"
     },
     {
       "parameters": {
@@ -60,26 +60,26 @@
         },
         "options": {}
       },
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "REDACTED",
       "typeVersion": 4.3,
       "position": [
         -224,
         24
       ],
-      "id": "e2741089-d1d3-43cd-ad0e-b2982716935d",
+      "id": "REDACTED",
       "name": "Video Status"
     },
     {
       "parameters": {
         "options": {}
       },
-      "type": "n8n-nodes-base.splitInBatches",
+      "type": "REDACTED",
       "typeVersion": 3,
       "position": [
         -1120,
         96
       ],
-      "id": "91fa0926-b117-46f0-b2ac-f4b5e3fba397",
+      "id": "REDACTED",
       "name": "Process One at a Time"
     },
     {
@@ -99,7 +99,7 @@
         0,
         0
       ],
-      "id": "ef89b948-10ec-41fd-b76d-556666ea2d08",
+      "id": "REDACTED",
       "name": "Is Complete?1"
     },
     {
@@ -112,16 +112,16 @@
         224,
         216
       ],
-      "id": "c2943681-52f3-45f6-9331-dbc331f359a3",
+      "id": "REDACTED",
       "name": "Wait Before Retry1",
-      "webhookId": "4cb8926a-8a1b-40b3-be88-1e2a822fc92d"
+      "webhookId": "REDACTED"
     },
     {
       "parameters": {
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "1tewbVtNMuw0oDmwx9-B4S811pMie_O-M-4VoJa2GEjk",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Google Sheets Script to HeyGen",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tewbVtNMuw0oDmwx9-B4S811pMie_O-M-4VoJa2GEjk/edit?usp=drivesdk"
@@ -210,13 +210,13 @@
         },
         "options": {}
       },
-      "type": "n8n-nodes-base.googleSheets",
+      "type": "REDACTED",
       "typeVersion": 4.5,
       "position": [
         224,
         0
       ],
-      "id": "8fd5d858-de0d-440e-8a9a-dc24c2998fce",
+      "id": "REDACTED",
       "name": "Update Sheet with Video1"
     },
     {
@@ -241,7 +241,7 @@
         -1344,
         96
       ],
-      "id": "b3e85aa7-c2b2-4f34-9f1e-018a23ab0b53",
+      "id": "REDACTED",
       "name": "Has Script?"
     },
     {
@@ -255,7 +255,7 @@
           },
           "conditions": [
             {
-              "id": "51d6ebcf-1b85-4752-a61f-a343c5d0e08c",
+              "id": "REDACTED",
               "leftValue": "=",
               "rightValue": "",
               "operator": {
@@ -275,7 +275,7 @@
         -672,
         24
       ],
-      "id": "5443c4d8-be4f-4a32-a9fd-c04a34c85257",
+      "id": "REDACTED",
       "name": "If"
     },
     {
@@ -289,7 +289,7 @@
         },
         "documentId": {
           "__rl": true,
-          "value": "1tewbVtNMuw0oDmwx9-B4S811pMie_O-M-4VoJa2GEjk",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Google Sheets Script to HeyGen",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tewbVtNMuw0oDmwx9-B4S811pMie_O-M-4VoJa2GEjk/edit?usp=drivesdk"
@@ -304,13 +304,13 @@
         "event": "rowUpdate",
         "options": {}
       },
-      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "type": "REDACTED",
       "typeVersion": 1,
       "position": [
         -1568,
         96
       ],
-      "id": "c759e8bf-eeae-42df-a32b-8333862fd02d",
+      "id": "REDACTED",
       "name": "Google Sheets Trigger"
     }
   ],
@@ -440,9 +440,9 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "3204ffbd-8cc4-49f1-97f5-01aca807b542",
+  "versionId": "REDACTED",
   "meta": {
-    "instanceId": "cb0154973bcd92f7ef5547aed2efb328b5df5bb198f16b309c8561141355ab93"
+    "instanceId": "REDACTED"
   },
   "id": "jqjWkC13RcSN86Lu",
   "tags": []

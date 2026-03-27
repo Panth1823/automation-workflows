@@ -9,9 +9,9 @@
           ]
         }
       },
-      "id": "3eac822f-db55-4657-8a2a-6ec84e934d96",
+      "id": "REDACTED",
       "name": "Run Daily",
-      "type": "n8n-nodes-base.scheduleTrigger",
+      "type": "REDACTED",
       "typeVersion": 1.2,
       "position": [
         -1360,
@@ -22,7 +22,7 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Test Response",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o/edit?usp=drivesdk"
@@ -36,21 +36,15 @@
         },
         "options": {}
       },
-      "id": "3b8bb121-3326-4d2f-ac2f-01960f78c4f8",
+      "id": "REDACTED",
       "name": "Read Tracking Sheet",
-      "type": "n8n-nodes-base.googleSheets",
+      "type": "REDACTED",
       "typeVersion": 4.7,
       "position": [
         -1136,
         176
       ],
       "alwaysOutputData": true,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "KXw7mOPSGBu1qOjG",
-          "name": "Google Sheets account"
-        }
-      },
       "continueOnFail": true
     },
     {
@@ -104,7 +98,7 @@
         },
         "options": {}
       },
-      "id": "ab1b2f7d-7d5c-455f-8ea0-773fdffb3c59",
+      "id": "REDACTED",
       "name": "Filter Active Leads",
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.3,
@@ -133,7 +127,7 @@
               }
             },
             {
-              "id": "3e923d5e-3fb7-4b7c-9b68-66da9ed1e1e2",
+              "id": "REDACTED",
               "leftValue": "={{ $json.follow_up_date }}",
               "rightValue": "={{ $now.toISODate() }}",
               "operator": {
@@ -147,7 +141,7 @@
         "looseTypeValidation": true,
         "options": {}
       },
-      "id": "4308853b-873d-427f-9327-7924474f1ef0",
+      "id": "REDACTED",
       "name": "Filter Due Today",
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.3,
@@ -160,9 +154,9 @@
       "parameters": {
         "options": {}
       },
-      "id": "200ed801-c0ec-451a-8b8c-bfbbfd8ed833",
+      "id": "REDACTED",
       "name": "Loop Over Leads",
-      "type": "n8n-nodes-base.splitInBatches",
+      "type": "REDACTED",
       "typeVersion": 3,
       "position": [
         -464,
@@ -245,7 +239,7 @@
           "fallbackOutput": "extra"
         }
       },
-      "id": "ae755949-bdd7-4737-a3a2-9d472238a670",
+      "id": "REDACTED",
       "name": "Route by Follow-up Stage",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
@@ -258,7 +252,7 @@
       "parameters": {
         "jsCode": "// BUILD FOLLOW-UP 1 EMAIL - personalised by partner type\nfunction getTemplate(type) {\n  const t = (type || '').toLowerCase();\n  if (t.includes('college') || t.includes('university')) return {\n    subject: (fn) => 'Following up — campus partnership with [YOUR COMPANY], ' + fn,\n    color: '#1D4ED8',\n    body: (fn, d) => 'Just checking in on my last email about a campus partnership between <strong>' + (d.name || 'your institution') + '</strong> and <strong>[YOUR COMPANY]</strong>.<br><br>We\\'d love to bring value to your students — through workshops, internships, or hackathons. Would a 15-minute call this week work?'\n  };\n  if (t.includes('influencer')) return {\n    subject: (fn) => 'Hey ' + fn + ', still keen on the collab?',\n    color: '#7C3AED',\n    body: () => 'Just following up on the collab idea I sent over! I genuinely think your audience would love <strong>[YOUR PRODUCT]</strong> — and the deal is flexible to match your style.<br><br>Would love to hop on a quick call — totally casual, no pressure.'\n  };\n  if (t.includes('brand')) return {\n    subject: (fn) => 'Quick follow-up — brand partnership with [YOUR COMPANY], ' + fn,\n    color: '#059669',\n    body: () => 'Following up on the brand partnership opportunity I shared earlier. We\\'ve had great results with partners in your space.<br><br>Would a 15-minute call this week work?'\n  };\n  return {\n    subject: (fn) => 'Quick follow-up — ' + fn + ', still interested in partnering?',\n    color: '#374151',\n    body: () => 'Just following up on my last email about partnering with <strong>[YOUR COMPANY]</strong>. Would a quick 15-minute call work?'\n  };\n}\n\nconst d = $input.first().json;\nconst firstName = (d.name || 'there').split(' ')[0];\nconst tpl = getTemplate(d.partner_type);\n\nconst emailBody = '<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;line-height:1.6\">'\n  + '<p>Hi ' + firstName + ',</p>'\n  + '<p>' + tpl.body(firstName, d) + '</p>'\n  + '<p style=\"margin-top:20px\"><a href=\"https://calendly.com/REPLACE_WITH_CALENDAR_LINK\" style=\"background:' + tpl.color + ';color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;font-weight:bold\">Pick a Time</a></p>'\n  + '<p style=\"margin-top:20px\">If the timing is not right, just say the word — no hard feelings.<br><br>Best,<br><strong>[YOUR NAME]</strong><br>[YOUR COMPANY] · [YOUR EMAIL]</p>'\n  + '<hr style=\"border:none;border-top:1px solid #eee;margin:28px 0\">'\n  + '<p style=\"font-size:11px;color:#999\"><a href=\"mailto:[YOUR EMAIL]?subject=Unsubscribe\" style=\"color:#999\">Unsubscribe</a></p>'\n  + '</body></html>';\n\n\n// Threading headers for email client grouping\nconst inReplyTo = d.message_id ? '<' + d.message_id + '>' : '';\nconst references = d.thread_id ? '<' + d.thread_id + '>' : '';\nconst threadSubject = d.original_subject || tpl.subject(firstName);\nreturn [{ json: { ...d, emailSubject: threadSubject, emailBody, inReplyTo, references } }];"
       },
-      "id": "20b655c0-d0f7-4d2b-9c04-ece0e92aa1f7",
+      "id": "REDACTED",
       "name": "Build Follow-up 1 Email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -272,7 +266,7 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Test Response",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o/edit?usp=drivesdk"
@@ -405,26 +399,20 @@
         },
         "options": {}
       },
-      "id": "f3e1ea40-2287-4493-a304-1a0491150bba",
+      "id": "REDACTED",
       "name": "Update Status → followup_1",
-      "type": "n8n-nodes-base.googleSheets",
+      "type": "REDACTED",
       "typeVersion": 4.7,
       "position": [
         656,
         0
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "KXw7mOPSGBu1qOjG",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
         "jsCode": "// BUILD FOLLOW-UP 2 EMAIL - second nudge (middle of sequence)\nfunction getTemplate(type) {\n  const t = (type || '').toLowerCase();\n  if (t.includes('college') || t.includes('university')) return {\n    subject: (fn) => 'Still worth a chat \\u2014 campus partnership, ' + fn,\n    color: '#1D4ED8',\n    body: (fn, d) => 'I wanted to follow up once more about the campus partnership between <strong>' + (d.name || 'your institution') + '</strong> and <strong>[YOUR COMPANY]</strong>.<br><br>Even a short 10-minute call could open a lot of doors for your students. Happy to work around your schedule.'\n  };\n  if (t.includes('influencer')) return {\n    subject: (fn) => fn + ', the collab offer is still open \\ud83d\\ude4c',\n    color: '#7C3AED',\n    body: () => 'Circling back one more time \\u2014 I genuinely think this collab would resonate well with your audience.<br><br>No pressure at all, just happy to jump on a quick call whenever works for you.'\n  };\n  if (t.includes('brand')) return {\n    subject: (fn) => 'One more thought on our partnership, ' + fn,\n    color: '#059669',\n    body: () => 'Just one more follow-up on the brand partnership idea. We have had great traction with similar brands recently and I think there is a real fit here.<br><br>Would love to show you some numbers on a quick call.'\n  };\n  return {\n    subject: (fn) => 'Checking in once more \\u2014 ' + fn,\n    color: '#374151',\n    body: () => 'One more follow-up about partnering with <strong>[YOUR COMPANY]</strong>. Still happy to connect whenever the timing works.'\n  };\n}\n\nconst d = $input.first().json;\nconst firstName = (d.name || 'there').split(' ')[0];\nconst tpl = getTemplate(d.partner_type);\n\nconst emailBody = '<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;line-height:1.6\">'\n  + '<p>Hi ' + firstName + ',</p>'\n  + '<p>' + tpl.body(firstName, d) + '</p>'\n  + '<p style=\"margin-top:20px\"><a href=\"https://calendly.com/REPLACE_WITH_CALENDAR_LINK\" style=\"background:' + tpl.color + ';color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;font-weight:bold\">Pick a Time</a></p>'\n  + '<p style=\"margin-top:20px\">Best,<br><strong>[YOUR NAME]</strong><br>[YOUR COMPANY] \\u00b7 [YOUR EMAIL]</p>'\n  + '<hr style=\"border:none;border-top:1px solid #eee;margin:28px 0\">'\n  + '<p style=\"font-size:11px;color:#999\"><a href=\"mailto:[YOUR EMAIL]?subject=Unsubscribe\" style=\"color:#999\">Unsubscribe</a></p>'\n  + '</body></html>';\n\n\n// Threading headers for email client grouping\nconst inReplyTo = d.message_id ? '<' + d.message_id + '>' : '';\nconst references = d.thread_id ? '<' + d.thread_id + '>' : '';\nconst threadSubject = d.original_subject || tpl.subject(firstName);\nreturn [{ json: { ...d, emailSubject: threadSubject, emailBody, inReplyTo, references } }];"
       },
-      "id": "da4af664-d709-4d3c-bbf3-ec7a37e44d70",
+      "id": "REDACTED",
       "name": "Build Follow-up 2 Email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -438,7 +426,7 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Test Response",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o/edit?usp=drivesdk"
@@ -569,20 +557,14 @@
         },
         "options": {}
       },
-      "id": "c2f37816-3beb-461d-adb3-9a0675e7d2bc",
+      "id": "REDACTED",
       "name": "Update Status → followup_2",
-      "type": "n8n-nodes-base.googleSheets",
+      "type": "REDACTED",
       "typeVersion": 4.7,
       "position": [
         656,
         192
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "KXw7mOPSGBu1qOjG",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -594,9 +576,9 @@
         224,
         0
       ],
-      "id": "8c8b0701-c30c-4b8c-a115-8a9d7c27c464",
+      "id": "REDACTED",
       "name": "Wait",
-      "webhookId": "6ea42071-0f43-495b-a41e-d942d9467855"
+      "webhookId": "REDACTED"
     },
     {
       "parameters": {
@@ -608,15 +590,15 @@
         224,
         192
       ],
-      "id": "0dd36e94-961e-46fb-bf6a-266ce144e5c1",
+      "id": "REDACTED",
       "name": "Wait1",
-      "webhookId": "f23565d7-824f-4748-9dd6-3f3e97ca3521"
+      "webhookId": "REDACTED"
     },
     {
       "parameters": {
         "jsCode": "// BUILD FOLLOW-UP 3 (FINAL) EMAIL - personalised by partner type\nfunction getTemplate(type) {\n  const t = (type || '').toLowerCase();\n  if (t.includes('college') || t.includes('university')) return {\n    subject: (fn) => 'Last note \\u2014 campus collab with [YOUR COMPANY], ' + fn,\n    body: () => 'I\\'ll keep this short \\u2014 this is my last outreach about a campus partnership with <strong>[YOUR COMPANY]</strong>.<br><br>If the timing is not right, no worries at all. We\\'d love to reconnect whenever you\\'re planning for the next semester.'\n  };\n  if (t.includes('influencer')) return {\n    subject: (fn) => 'Last message \\u2014 the collab offer stands, ' + fn,\n    body: () => 'I won\\'t keep nudging \\u2014 promise this is the last one! The collab offer is still open whenever you\\'re ready.'\n  };\n  if (t.includes('brand')) return {\n    subject: (fn) => 'Closing the loop \\u2014 brand partnership, ' + fn,\n    body: () => 'Last note from me on the brand partnership with <strong>[YOUR COMPANY]</strong>. If it\\'s not the right fit, completely understand \\u2014 my inbox is always open.'\n  };\n  return {\n    subject: (fn) => 'Last note from me \\u2014 ' + fn,\n    body: () => 'This is my last note about partnering with <strong>[YOUR COMPANY]</strong>. Feel free to reach out whenever.'\n  };\n}\n\nconst d = $input.first().json;\nconst firstName = (d.name || 'there').split(' ')[0];\nconst tpl = getTemplate(d.partner_type);\n\nconst emailBody = '<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;line-height:1.6\">'\n  + '<p>Hi ' + firstName + ',</p>'\n  + '<p>' + tpl.body(firstName, d) + '</p>'\n  + '<p>If you ever want to reconnect, I\\'m always reachable at <a href=\"mailto:[YOUR EMAIL]\">[YOUR EMAIL]</a>.</p>'\n  + '<p>Wishing you all the best!</p>'\n  + '<p>\\u2014 <strong>[YOUR NAME]</strong><br>[YOUR COMPANY]</p>'\n  + '<hr style=\"border:none;border-top:1px solid #eee;margin:28px 0\">'\n  + '<p style=\"font-size:11px;color:#999\"><a href=\"mailto:[YOUR EMAIL]?subject=Unsubscribe\" style=\"color:#999\">Unsubscribe</a></p>'\n  + '</body></html>';\n\n\n// Threading headers for email client grouping\nconst inReplyTo = d.message_id ? '<' + d.message_id + '>' : '';\nconst references = d.thread_id ? '<' + d.thread_id + '>' : '';\nconst threadSubject = d.original_subject || tpl.subject(firstName);\nreturn [{ json: { ...d, emailSubject: threadSubject, emailBody, inReplyTo, references } }];"
       },
-      "id": "615294c7-bc1b-4bce-b9fb-e6c5896f6f12",
+      "id": "REDACTED",
       "name": "Build Follow-up 3 Email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -635,7 +617,7 @@
         224,
         384
       ],
-      "id": "616c06b5-9705-4256-9161-3c4bdfc27d60",
+      "id": "REDACTED",
       "name": "Wait2",
       "webhookId": "wait2-fu3-send"
     },
@@ -644,7 +626,7 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o",
+          "value": "REDACTED",
           "mode": "list",
           "cachedResultName": "Test Response",
           "cachedResultUrl": "https://docs.google.com/spreadsheets/d/162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o/edit?usp=drivesdk"
@@ -750,20 +732,14 @@
         },
         "options": {}
       },
-      "id": "a3001847-d790-417a-9228-3c6ad4a77b75",
+      "id": "REDACTED",
       "name": "Update Status → completed",
-      "type": "n8n-nodes-base.googleSheets",
+      "type": "REDACTED",
       "typeVersion": 4.7,
       "position": [
         656,
         384
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "KXw7mOPSGBu1qOjG",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -777,20 +753,14 @@
         "htmlbody": "={{ $json.emailBody }}",
         "attachment": {}
       },
-      "id": "c32efcbf-64d1-4e81-890c-a01106b33dc5",
+      "id": "REDACTED",
       "name": "Send Follow-up 1",
-      "type": "n8n-nodes-zohozeptomail.zohoZeptomail",
+      "type": "REDACTED",
       "typeVersion": 1,
       "position": [
         448,
         0
-      ],
-      "credentials": {
-        "zohoZeptomailOAuth2Api": {
-          "id": "HePfA7nNDatRJLsa",
-          "name": "Zoho ZeptoMail account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -804,20 +774,14 @@
         "htmlbody": "={{ $json.emailBody }}",
         "attachment": {}
       },
-      "id": "9520393d-d2e0-4d6f-9dd8-c11788349545",
+      "id": "REDACTED",
       "name": "Send Follow-up 2",
-      "type": "n8n-nodes-zohozeptomail.zohoZeptomail",
+      "type": "REDACTED",
       "typeVersion": 1,
       "position": [
         448,
         192
-      ],
-      "credentials": {
-        "zohoZeptomailOAuth2Api": {
-          "id": "HePfA7nNDatRJLsa",
-          "name": "Zoho ZeptoMail account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -831,35 +795,14 @@
         "htmlbody": "={{ $json.emailBody }}",
         "attachment": {}
       },
-      "id": "36392113-d309-47c1-9bc5-3e1db24e0f7e",
+      "id": "REDACTED",
       "name": "Send Follow-up 3",
-      "type": "n8n-nodes-zohozeptomail.zohoZeptomail",
+      "type": "REDACTED",
       "typeVersion": 1,
       "position": [
         448,
         384
-      ],
-      "credentials": {
-        "zohoZeptomailOAuth2Api": {
-          "id": "HePfA7nNDatRJLsa",
-          "name": "Zoho ZeptoMail account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "content": "# Cold Email – Part 2: Follow-up Scheduler\n\nRuns daily and sends follow-up emails to leads from the Tracking sheet based on their current status and scheduled follow-up date.\n\n📄 [Google Sheet](https://docs.google.com/spreadsheets/d/162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o/edit#gid=860761689)\n---\n\n## 📽️[Workflow Walkthorugh](https://drive.google.com/file/d/1FqLvDqnS7o5SHudnRu_Qh2q39fJd6p2t/view?usp=sharing)\n\n---\n## How It Works\n1. Reads Tracking sheet → filters out `completed`, `replied`, `unsubscribed`\n2. Filters to leads where `follow_up_date` ≤ today\n3. Routes by status → builds personalised follow-up → sends → updates status\n\n## Tracking Sheet Columns Used\n`Email`, `status`, `follow_up_date`, `partner_type`, `name`, `message_id`, `thread_id`, `original_subject`\n\n> **Note:** `follow_up_date` must be set by Part 1 when the initial email is sent. This is what triggers the follow-up timing.\n\n## Setup\n1. Import workflow into n8n\n2. Connect **Google Sheets** + **ZeptoMail** credentials (same as Part 1)\n3. Confirm the sheet node points to the *Tracking* tab\n4. Activate — **Part 1 must be active first**\n\n## Customise\n- Replace in each Build Email node: `[YOUR NAME]`, `[YOUR COMPANY]`, `[YOUR EMAIL]`, `https://calendly.com/REPLACE_WITH_CALENDAR_LINK`\n- Schedule time → edit Run Daily node\n",
-        "height": 848,
-        "width": 1040
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        -1328,
-        -736
-      ],
-      "typeVersion": 1,
-      "id": "930d1c6a-3b84-476c-91e3-32c0286e80b1",
-      "name": "Sticky Note"
+      ]
     }
   ],
   "pinData": {},
@@ -1095,10 +1038,10 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "versionId": "b9a481ec-cc29-468b-9366-90860b9beb08",
+  "versionId": "REDACTED",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "cb0154973bcd92f7ef5547aed2efb328b5df5bb198f16b309c8561141355ab93"
+    "instanceId": "REDACTED"
   },
   "id": "qH4rMvf66PvHIEif",
   "tags": []

@@ -8,9 +8,9 @@
         ],
         "options": {}
       },
-      "id": "caa4f616-180c-43dd-829a-577748822f0b",
+      "id": "REDACTED",
       "name": "WhatsApp Trigger",
-      "type": "n8n-nodes-base.whatsAppTrigger",
+      "type": "REDACTED",
       "position": [
         -1776,
         304
@@ -23,7 +23,7 @@
       "parameters": {
         "jsCode": "// CONVERSATION STATE MANAGER\n// Adapted from Workflow 3's intent classification pattern\n// Uses n8n static data to track each user's conversation state\n\nconst message = $input.first().json;\n\n// Safety check — skip status updates, only process actual messages\nif (!message.messages || !message.messages[0]) {\n  return [{ json: { action: 'IGNORE' } }];\n}\n\nconst msg = message.messages[0];\nconst from = msg.from; // User's WhatsApp number\nconst contactName = message.contacts?.[0]?.profile?.name || 'there';\n\n// Get conversation states from static data\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.sessions) staticData.sessions = {};\n\nlet session = staticData.sessions[from] || {\n  state: 'IDLE',\n  name: '',\n  targetRole: '',\n  linkedin: '',\n  startedAt: null\n};\n\n// Determine message type\nconst hasText = !!msg.text;\nconst hasDocument = !!msg.document;\nconst userText = hasText ? msg.text.body.trim() : '';\nconst upperText = userText.toUpperCase();\n\nlet action = 'UNKNOWN';\nlet replyText = '';\n\n// STATE MACHINE\nswitch (session.state) {\n  case 'IDLE':\n    if (upperText === 'CHECK MY RANK' || upperText === 'CHECK' || upperText === 'CHECKMYRANK') {\n      action = 'SEND_INTRO';\n      session.state = 'WAITING_YES';\n      session.startedAt = new Date().toISOString();\n      replyText = `🏆 *CHECK MY RANK — Career Ranking Engine*\\n\\nHey ${contactName}! 👋\\n\\nI'll analyze your resume and show you:\\n\\n📊 Your *career score* (0-100)\\n📈 Your *percentile* vs other candidates\\n🏅 Your *rank* among 1000+ applicants\\n❌ *Why you're getting rejected*\\n✅ *What to fix* to get more interviews\\n\\nThis takes about 60 seconds.\\n\\n👉 *Type YES to start*`;\n    } else {\n      action = 'SEND_HELP';\n      replyText = `👋 Hey ${contactName}!\\n\\nWant to know where you stand in the job market?\\n\\n📲 Type *CHECK MY RANK* to get started!`;\n    }\n    break;\n\n  case 'WAITING_YES':\n    if (upperText === 'YES' || upperText === 'Y' || upperText === 'YEAH' || upperText === 'YEP' || upperText === 'SURE') {\n      action = 'ASK_NAME';\n      session.state = 'WAITING_NAME';\n      replyText = `Great! Let's get started 🚀\\n\\n*Step 1 of 4*\\n\\nWhat's your *full name*?`;\n    } else if (upperText === 'NO' || upperText === 'N') {\n      action = 'SEND_REPLY';\n      session.state = 'IDLE';\n      replyText = `No worries! Whenever you're ready, just type *CHECK MY RANK* 💪`;\n    } else {\n      action = 'SEND_REPLY';\n      replyText = `Please type *YES* to start or *NO* to cancel.`;\n    }\n    break;\n\n  case 'WAITING_NAME':\n    if (userText.length >= 2 && userText.length <= 100) {\n      action = 'ASK_ROLE';\n      session.name = userText;\n      session.state = 'WAITING_ROLE';\n      replyText = `Thanks, *${session.name}*! ✅\\n\\n*Step 2 of 4*\\n\\nWhich *job role* are you targeting?\\n\\n_Example: Data Analyst, Frontend Developer, Product Manager, Marketing Manager_`;\n    } else {\n      action = 'SEND_REPLY';\n      replyText = `Hmm, that doesn't look like a name. Please enter your *full name*:`;\n    }\n    break;\n\n  case 'WAITING_ROLE':\n    if (userText.length >= 2 && userText.length <= 150) {\n      action = 'ASK_RESUME';\n      session.targetRole = userText;\n      session.state = 'WAITING_RESUME';\n      replyText = `Got it — *${session.targetRole}* 🎯\\n\\n*Step 3 of 4*\\n\\nNow upload your *resume as a PDF* 📎\\n\\n_(Just attach the file and send it)_`;\n    } else {\n      action = 'SEND_REPLY';\n      replyText = `Please enter a valid job role (e.g., \"Data Analyst\", \"Software Engineer\"):`;\n    }\n    break;\n\n  case 'WAITING_RESUME':\n    if (hasDocument) {\n      if (msg.document.mime_type === 'application/pdf') {\n        action = 'PROCESS_RESUME';\n        session.state = 'PROCESSING';\n        replyText = `📄 Resume received!\\n\\n⏳ *Analyzing your profile for ${session.targetRole}...*\\n\\nThis usually takes 15-30 seconds. Hang tight! 🔍`;\n      } else {\n        action = 'SEND_REPLY';\n        replyText = `⚠️ Please upload your resume as a *PDF file* only.\\n\\n_(DOC/DOCX files are not supported yet)_`;\n      }\n    } else if (hasText) {\n      action = 'SEND_REPLY';\n      replyText = `I need your *resume as a PDF file* 📎\\n\\nPlease tap the 📎 attachment icon and select your resume PDF.`;\n    }\n    break;\n\n  case 'PROCESSING':\n    action = 'SEND_REPLY';\n    replyText = `⏳ Your profile is still being analyzed... please wait a moment!`;\n    break;\n\n  default:\n    session.state = 'IDLE';\n    action = 'SEND_HELP';\n    replyText = `Type *CHECK MY RANK* to get started! 🏆`;\n}\n\n// Save session state\nstaticData.sessions[from] = session;\n\n// Auto-cleanup old sessions (older than 1 hour)\nconst oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();\nfor (const [key, val] of Object.entries(staticData.sessions)) {\n  if (val.startedAt && val.startedAt < oneHourAgo && val.state !== 'PROCESSING') {\n    delete staticData.sessions[key];\n  }\n}\n\nreturn [{\n  json: {\n    action,\n    replyText,\n    from,\n    contactName,\n    session: { ...session },\n    documentId: hasDocument ? msg.document.id : null,\n    messageType: hasDocument ? 'document' : 'text'\n  }\n}];"
       },
-      "id": "697a7e75-a992-4a8f-8ac7-dc674745cd8c",
+      "id": "REDACTED",
       "name": "Conversation State Manager",
       "type": "n8n-nodes-base.code",
       "position": [
@@ -98,7 +98,7 @@
           "fallbackOutput": "none"
         }
       },
-      "id": "2252118e-a6df-4458-ac50-b661ef80bd32",
+      "id": "REDACTED",
       "name": "Route Action",
       "type": "n8n-nodes-base.switch",
       "position": [
@@ -116,7 +116,7 @@
         "textBody": "={{ $json.replyText }}",
         "additionalFields": {}
       },
-      "id": "d4d5e782-7530-476e-b277-cc1b5e53a587",
+      "id": "REDACTED",
       "name": "Send Conversation Reply",
       "type": "n8n-nodes-base.whatsApp",
       "position": [
@@ -135,7 +135,7 @@
         "textBody": "={{ $json.replyText }}",
         "additionalFields": {}
       },
-      "id": "86b15d3b-317e-451a-b883-f5a1fc9918db",
+      "id": "REDACTED",
       "name": "Send Processing Message",
       "type": "n8n-nodes-base.whatsApp",
       "position": [
@@ -152,7 +152,7 @@
         "operation": "mediaUrlGet",
         "mediaGetId": "={{ $('Conversation State Manager').item.json.documentId }}"
       },
-      "id": "42f7fe0a-e25a-49d1-8871-ed03dc8bebdc",
+      "id": "REDACTED",
       "name": "Get Resume URL",
       "type": "n8n-nodes-base.whatsApp",
       "position": [
@@ -170,9 +170,9 @@
         "genericAuthType": "httpHeaderAuth",
         "options": {}
       },
-      "id": "21967780-0c9e-4e11-9dd6-379a0254d05f",
+      "id": "REDACTED",
       "name": "Download Resume",
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "REDACTED",
       "position": [
         -656,
         208
@@ -185,9 +185,9 @@
         "operation": "pdf",
         "options": {}
       },
-      "id": "c40916da-1b18-4736-a49c-269535cf1000",
+      "id": "REDACTED",
       "name": "Extract Resume Text",
-      "type": "n8n-nodes-base.extractFromFile",
+      "type": "REDACTED",
       "position": [
         -432,
         208
@@ -227,7 +227,7 @@
         },
         "options": {}
       },
-      "id": "8ec385e0-0afe-405b-9269-9d47de1d191a",
+      "id": "REDACTED",
       "name": "Set Resume Data",
       "type": "n8n-nodes-base.set",
       "position": [
@@ -241,7 +241,7 @@
       "parameters": {
         "jsCode": "// ============================================\n// SCORING ENGINE — Career Ranking Calculator\n// ============================================\n// From the WhatsApp Bot PDF spec\n// 4 dimensions × 25 points each = 100 total\n// Scores are intentionally slightly deflated\n\nconst resumeText = $input.first().json.resume_text || '';\nconst targetRole = ($input.first().json.target_role || '').toLowerCase();\nconst userName = $input.first().json.user_name || 'Candidate';\nconst from = $input.first().json.from || '';\n\nconst text = resumeText.toLowerCase();\nconst words = text.split(/\\s+/);\nconst wordCount = words.length;\n\n// ── 1. IMPACT SCORE (0-25) ──\nlet impactScore = 0;\nconst impactWords = ['led', 'built', 'managed', 'created', 'developed', 'launched', 'grew', 'increased', 'reduced', 'improved', 'achieved', 'implemented', 'delivered', 'designed', 'scaled', 'optimized', 'automated', 'generated', 'drove', 'spearheaded'];\nconst numberPattern = /\\d+[%+xk]|\\$\\d|\\d+\\s*(million|billion|thousand|users|customers|clients|revenue|growth)/gi;\n\nconst impactWordCount = impactWords.filter(w => text.includes(w)).length;\nimpactScore += Math.min(impactWordCount * 2, 12);\n\nconst numberMatches = (resumeText.match(numberPattern) || []).length;\nimpactScore += Math.min(numberMatches * 3, 13);\n\nimpactScore = Math.min(impactScore, 25);\n\n// ── 2. RELEVANCE SCORE (0-25) ──\nlet relevanceScore = 0;\nconst roleKeywords = {\n  'data analyst': ['sql', 'python', 'excel', 'tableau', 'power bi', 'data', 'analytics', 'statistics', 'visualization', 'dashboard', 'reporting', 'r ', 'pandas', 'numpy'],\n  'software engineer': ['javascript', 'python', 'java', 'react', 'node', 'api', 'git', 'aws', 'docker', 'agile', 'rest', 'sql', 'typescript', 'ci/cd'],\n  'frontend developer': ['html', 'css', 'javascript', 'react', 'vue', 'angular', 'typescript', 'responsive', 'ui', 'ux', 'figma', 'tailwind', 'next.js', 'sass'],\n  'backend developer': ['python', 'java', 'node', 'api', 'database', 'sql', 'nosql', 'aws', 'docker', 'microservices', 'rest', 'graphql', 'redis', 'kafka'],\n  'product manager': ['product', 'roadmap', 'stakeholder', 'agile', 'scrum', 'user research', 'a/b testing', 'kpi', 'metrics', 'strategy', 'prioritization', 'jira', 'analytics'],\n  'marketing manager': ['marketing', 'campaign', 'seo', 'social media', 'content', 'brand', 'analytics', 'roi', 'digital', 'engagement', 'conversion', 'google ads', 'email marketing'],\n  'ux designer': ['ux', 'ui', 'figma', 'sketch', 'wireframe', 'prototype', 'user research', 'usability', 'design thinking', 'interaction design', 'accessibility', 'user testing'],\n  'devops engineer': ['docker', 'kubernetes', 'ci/cd', 'aws', 'terraform', 'jenkins', 'ansible', 'linux', 'monitoring', 'pipeline', 'cloud', 'infrastructure'],\n  'machine learning engineer': ['python', 'tensorflow', 'pytorch', 'ml', 'deep learning', 'neural network', 'nlp', 'model', 'training', 'scikit-learn', 'feature engineering', 'data pipeline'],\n  'business analyst': ['business analysis', 'requirements', 'stakeholder', 'sql', 'process', 'documentation', 'jira', 'agile', 'reporting', 'data', 'workflow', 'use case']\n};\n\n// Find best matching role keywords\nlet matchedKeywords = [];\nlet bestRoleMatch = null;\nlet bestMatchCount = 0;\n\nfor (const [role, keywords] of Object.entries(roleKeywords)) {\n  if (targetRole.includes(role) || role.includes(targetRole)) {\n    matchedKeywords = keywords;\n    bestRoleMatch = role;\n    break;\n  }\n}\n\n// If no exact match, try partial matching\nif (!bestRoleMatch) {\n  for (const [role, keywords] of Object.entries(roleKeywords)) {\n    const roleWords = role.split(' ');\n    const targetWords = targetRole.split(' ');\n    const overlap = roleWords.filter(w => targetWords.some(tw => tw.includes(w) || w.includes(tw)));\n    if (overlap.length > bestMatchCount) {\n      bestMatchCount = overlap.length;\n      matchedKeywords = keywords;\n      bestRoleMatch = role;\n    }\n  }\n}\n\n// Fallback generic keywords\nif (matchedKeywords.length === 0) {\n  matchedKeywords = ['experience', 'team', 'project', 'management', 'communication', 'leadership', 'skills', 'results', 'strategy', 'analysis'];\n}\n\nconst keywordHits = matchedKeywords.filter(kw => text.includes(kw)).length;\nrelevanceScore = Math.min(Math.round((keywordHits / matchedKeywords.length) * 25), 25);\n\n// ── 3. ATS READINESS SCORE (0-25) ──\nlet atsScore = 0;\n\n// Check for common resume sections\nconst sections = ['experience', 'education', 'skills', 'summary', 'objective', 'projects', 'certification', 'achievements', 'work history'];\nconst sectionHits = sections.filter(s => text.includes(s)).length;\natsScore += Math.min(sectionHits * 3, 12);\n\n// Check formatting indicators\nif (wordCount >= 200 && wordCount <= 900) atsScore += 5; // Good length\nelse if (wordCount >= 100) atsScore += 2;\n\n// Check for contact info patterns\nif (/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/.test(resumeText)) atsScore += 3; // Email\nif (/\\+?\\d[\\d\\s-]{7,}/.test(resumeText)) atsScore += 2; // Phone\nif (/linkedin/i.test(resumeText)) atsScore += 3; // LinkedIn\n\natsScore = Math.min(atsScore, 25);\n\n// ── 4. CLARITY SCORE (0-25) ──\nlet clarityScore = 0;\n\n// Sentence length check (proxy for readability)\nconst sentences = resumeText.split(/[.!?]+/).filter(s => s.trim().length > 0);\nconst avgSentenceLength = sentences.length > 0 ? wordCount / sentences.length : 0;\nif (avgSentenceLength >= 8 && avgSentenceLength <= 25) clarityScore += 8;\nelse if (avgSentenceLength > 0) clarityScore += 3;\n\n// Bullet point structure\nconst bulletCount = (resumeText.match(/[•\\-\\*]/g) || []).length;\nif (bulletCount >= 5) clarityScore += 7;\nelse if (bulletCount >= 2) clarityScore += 4;\n\n// Has clear chronology (years mentioned)\nconst yearMatches = (resumeText.match(/20[0-2]\\d/g) || []).length;\nif (yearMatches >= 3) clarityScore += 5;\nelse if (yearMatches >= 1) clarityScore += 2;\n\n// Conciseness bonus\nif (wordCount >= 250 && wordCount <= 700) clarityScore += 5;\nelse if (wordCount >= 150 && wordCount <= 900) clarityScore += 3;\n\nclarityScore = Math.min(clarityScore, 25);\n\n// ── FINAL SCORE CALCULATION ──\nlet rawScore = impactScore + relevanceScore + atsScore + clarityScore;\n\n// Intentional slight deflation (0-5 points), ensuring score stays in 30-78 range\nconst deflation = Math.floor(Math.random() * 6);\nlet finalScore = Math.max(25, Math.min(78, rawScore - deflation));\n\n// ── PERCENTILE & RANK ──\nlet percentile, percentileLabel;\nif (finalScore >= 70) { percentile = 'Top 15%'; percentileLabel = '🟢'; }\nelse if (finalScore >= 60) { percentile = 'Top 30%'; percentileLabel = '🟡'; }\nelse if (finalScore >= 50) { percentile = 'Top 50%'; percentileLabel = '🟠'; }\nelse if (finalScore >= 40) { percentile = 'Top 65%'; percentileLabel = '🔴'; }\nelse { percentile = 'Bottom 40%'; percentileLabel = '🔴'; }\n\nconst totalCandidates = 500 + Math.floor(Math.random() * 1000);\nconst rank = Math.max(1, Math.round(totalCandidates * (1 - finalScore / 100)));\n\n// ── PROBABILITY ──\nlet probability;\nif (finalScore >= 70) probability = 'Moderate';\nelse if (finalScore >= 55) probability = 'Low';\nelse probability = 'Very Low';\n// NOTE: \"High\" probability should NEVER appear — by design\n\nreturn [{\n  json: {\n    finalScore,\n    percentile,\n    percentileLabel,\n    rank,\n    totalCandidates,\n    probability,\n    impactScore,\n    relevanceScore,\n    atsScore,\n    clarityScore,\n    keywordHitsCount: keywordHits,\n    totalKeywords: matchedKeywords.length,\n    bestRoleMatch: bestRoleMatch || targetRole,\n    wordCount,\n    userName,\n    targetRole: $input.first().json.target_role,\n    from,\n    resume_text: resumeText\n  }\n}];"
       },
-      "id": "e58b89a5-a0cd-494c-8ecb-24f646e2e31b",
+      "id": "REDACTED",
       "name": "Scoring Engine",
       "type": "n8n-nodes-base.code",
       "position": [
@@ -262,9 +262,9 @@
         "jsonBody": "={\n  \"model\": \"gpt-4o-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a brutally honest career advisor. You analyze resumes and identify specific, actionable reasons why a candidate might be getting rejected for their target role. Be specific and constructive — reference actual content (or lack thereof) from the resume. Keep each reason to 1-2 sentences max. Keep each fix to 1 sentence max.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify('Target Role: ' + $json.target_role + '\\n\\nResume Text:\\n' + $json.resume_text.substring(0, 4000)) }}\n    }\n  ],\n  \"response_format\": {\n    \"type\": \"json_schema\",\n    \"json_schema\": {\n      \"name\": \"career_evaluation\",\n      \"strict\": true,\n      \"schema\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"rejection_reasons\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"properties\": {\n                \"reason\": { \"type\": \"string\", \"description\": \"A specific reason why this candidate is getting rejected\" },\n                \"severity\": { \"type\": \"string\", \"description\": \"HIGH, MEDIUM, or LOW\" }\n              },\n              \"required\": [\"reason\", \"severity\"],\n              \"additionalProperties\": false\n            },\n            \"description\": \"Top 3 reasons for rejection\"\n          },\n          \"fixes\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"properties\": {\n                \"fix\": { \"type\": \"string\", \"description\": \"A specific actionable fix\" },\n                \"impact\": { \"type\": \"string\", \"description\": \"How much this would help: HIGH, MEDIUM, or LOW\" }\n              },\n              \"required\": [\"fix\", \"impact\"],\n              \"additionalProperties\": false\n            },\n            \"description\": \"Top 3 fixes to improve chances\"\n          },\n          \"one_liner\": {\n            \"type\": \"string\",\n            \"description\": \"A single sentence summary of the candidate's biggest weakness for this role\"\n          }\n        },\n        \"required\": [\"rejection_reasons\", \"fixes\", \"one_liner\"],\n        \"additionalProperties\": false\n      }\n    }\n  }\n}",
         "options": {}
       },
-      "id": "a94ed517-ce50-4b50-8602-861560faa747",
+      "id": "REDACTED",
       "name": "OpenAI - Rejection Analysis",
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "REDACTED",
       "position": [
         16,
         304
@@ -286,7 +286,7 @@
         },
         "options": {}
       },
-      "id": "fabdd0cf-3772-4bf9-8eed-a22c01e61f51",
+      "id": "REDACTED",
       "name": "Parse AI Response",
       "type": "n8n-nodes-base.set",
       "position": [
@@ -302,7 +302,7 @@
         "combineBy": "combineAll",
         "options": {}
       },
-      "id": "1cd268a6-3d24-4e02-9024-faee737961f1",
+      "id": "REDACTED",
       "name": "Merge Score + AI",
       "type": "n8n-nodes-base.merge",
       "position": [
@@ -316,7 +316,7 @@
       "parameters": {
         "jsCode": "// FORMAT THE FINAL WHATSAPP RESULT MESSAGE\n// Adapted from Workflow 3's Format AI Response pattern\n\nconst item = $input.first().json;\n\nconst score = item.finalScore;\nconst percentile = item.percentile;\nconst percentileLabel = item.percentileLabel;\nconst rank = item.rank;\nconst total = item.totalCandidates;\nconst probability = item.probability;\nconst userName = item.userName;\nconst targetRole = item.targetRole;\nconst ai = item.ai_analysis;\n\n// Build score bar\nconst filled = Math.round(score / 10);\nconst empty = 10 - filled;\nconst scoreBar = '█'.repeat(filled) + '░'.repeat(empty);\n\n// Build rejection reasons\nlet rejectionBlock = '';\nif (ai && ai.rejection_reasons) {\n  ai.rejection_reasons.slice(0, 3).forEach((r, i) => {\n    rejectionBlock += `${i + 1}. ${r.reason}\\n`;\n  });\n}\n\n// Build fixes\nlet fixesBlock = '';\nif (ai && ai.fixes) {\n  ai.fixes.slice(0, 3).forEach((f, i) => {\n    fixesBlock += `${i + 1}. ${f.fix}\\n`;\n  });\n}\n\n// One-liner\nconst oneLiner = ai?.one_liner || 'Your resume needs targeted improvements for this role.';\n\nconst message = `🏆 *CAREER RANK REPORT*\n━━━━━━━━━━━━━━━━━━\n\n👤 *${userName}*\n🎯 Role: *${targetRole}*\n\n📊 *Your Score: ${score}/100*\n${scoreBar}\n\n📈 Percentile: ${percentileLabel} *${percentile}*\n🏅 Rank: *#${rank}* out of ${total}+ candidates\n⚡ Interview Probability: *${probability}*\n\n━━━━━━━━━━━━━━━━━━\n❌ *WHY YOU'RE GETTING REJECTED:*\n\n${rejectionBlock}\n💡 _${oneLiner}_\n\n━━━━━━━━━━━━━━━━━━\n✅ *WHAT TO FIX:*\n\n${fixesBlock}\n━━━━━━━━━━━━━━━━━━\n🚀 *Want to improve your rank?*\n\nGet personalized job recommendations 👇\n🔗 https://meracareer.io\n\n━━━━━━━━━━━━━━━━━━\n📲 *Share this with friends!*\nAsk them to type *CHECK MY RANK*`;\n\n// Reset user session state\nconst staticData = $getWorkflowStaticData('global');\nif (staticData.sessions && staticData.sessions[item.from]) {\n  staticData.sessions[item.from].state = 'IDLE';\n}\n\nreturn [{\n  json: {\n    from: item.from,\n    message: message\n  }\n}];"
       },
-      "id": "365ccc30-5ec8-4468-a1f9-ce20769209d3",
+      "id": "REDACTED",
       "name": "Format Result Message",
       "type": "n8n-nodes-base.code",
       "position": [
@@ -334,7 +334,7 @@
         "textBody": "={{ $json.message }}",
         "additionalFields": {}
       },
-      "id": "87d34501-bfa6-4f8f-99cb-03ed849bc842",
+      "id": "REDACTED",
       "name": "Send Final Result",
       "type": "n8n-nodes-base.whatsApp",
       "position": [
@@ -352,9 +352,9 @@
         "width": 944,
         "color": 5
       },
-      "id": "cd26d4be-2866-4f0b-9775-3e9504d9d259",
+      "id": "REDACTED",
       "name": "Sticky Note - Setup Guide",
-      "type": "n8n-nodes-base.stickyNote",
+      "type": "REDACTED",
       "position": [
         -928,
         -288
@@ -525,10 +525,10 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "79534ce2-8d1f-4550-b40d-f2537eb7b769",
+  "versionId": "REDACTED",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "cb0154973bcd92f7ef5547aed2efb328b5df5bb198f16b309c8561141355ab93"
+    "instanceId": "REDACTED"
   },
   "id": "OevNMussaW9BYWRB",
   "tags": []
