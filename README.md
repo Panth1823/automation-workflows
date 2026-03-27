@@ -38,10 +38,17 @@ This repository contains production-style n8n workflows grouped by use case.
 	Description: Automates customer email operations with trigger-based sends, status handling, and logging for consistent communication.  
 	Check it out: [Open workflow](Customer%20Project%20-%20Email%20Automation.json)
 
-## Images
 
-All screenshots are centralized in [images](images):
-- [job-scraper.png](images/job-scraper.png)
-- [job-deactivator.png](images/job-deactivator.png)
-- [cold-email-part-1.png](images/cold-email-part-1.png)
-- [cold-email-part-2.png](images/cold-email-part-2.png)
+### Preview
+
+#### Job Scraper
+![Job Scraper](images/job-scraper.png)
+
+#### Job Deactivator
+![Job Deactivator](images/job-deactivator.png)
+
+#### Cold Email Part 1
+![Cold Email Part 1](images/cold-email-part-1.png)
+
+#### Cold Email Part 2
+![Cold Email Part 2](images/cold-email-part-2.png)
