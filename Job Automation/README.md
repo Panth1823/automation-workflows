@@ -11,7 +11,7 @@ Description:
 - Writes deduplicated jobs to storage layers for downstream usage.
 
 Preview:
-![Job Scraper](../Job%20Scraper.png)
+![Job Scraper](../images/job-scraper.png)
 
 ## 2) Job Deactivator
 File: 🗑️ Job Deactivator.json
@@ -22,4 +22,4 @@ Description:
 - Marks stale jobs inactive to keep the database and sheet clean.
 
 Preview:
-![Job Deactivator](../Job%20Deactivator.png)
+![Job Deactivator](../images/job-deactivator.png)

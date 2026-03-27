@@ -11,7 +11,7 @@ Description:
 - Sends personalized first-touch email and logs tracking metadata.
 
 Preview:
-![Cold Email Part 1](../P1%20cold%20email.png)
+![Cold Email Part 1](../images/cold-email-part-1.png)
 
 ## 2) Follow-up Scheduler
 File: Cold email workflow Part 2. Follow-up Scheduler.json
@@ -22,4 +22,4 @@ Description:
 - Updates lifecycle status after each send.
 
 Preview:
-![Cold Email Part 2](../P2%20Codl%20email.png)
+![Cold Email Part 2](../images/cold-email-part-2.png)
