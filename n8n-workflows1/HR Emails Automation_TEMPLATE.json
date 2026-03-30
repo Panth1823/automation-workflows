@@ -1,0 +1,758 @@
+{
+  "name": "HR Emails Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Automate Personalized HR Email Outreach with Rate Limiting\n\nThis workflow streamlines HR outreach by fetching contact data, validating emails, enforcing daily sending limits, and sending personalized emails with attachments, all while logging activity.\n\n### How it works\n1. Read HR contact data from Google Sheets.\n2. Remove duplicates and validate email formats.\n3. Apply dynamic daily email sending limits.\n4. Generate personalized email content.\n5. Download resumes for attachments.\n6. Send emails via Gmail with attachments.\n7. Log sending status (success/failure) to Google Sheets.\n\n### Setup\n1. Configure Google Sheets credentials.\n2. Configure Gmail OAuth2 credentials.\n3. Update 'Google Sheets - Read HR Data' with your document and sheet IDs.\n4. Define email content in 'Email Creator' node.\n5. Set 'Download Resume' URL to your resume repository.\n6. Update 'Log to Google Sheets' with your tracking sheet IDs.\n\n### Customization\nAdjust the 'Rate Limiter' node's RAMP_START and LIMIT_BY_WEEK variables to match your desired sending schedule and volume.",
+        "height": 600,
+        "width": 500,
+        "color": 2
+      },
+      "id": "sticky-main-27egge",
+      "name": "Main Sticky",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1372,
+        1024
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "88d7ea8a-c3c3-4b6f-ac8a-aac877f13bda",
+              "leftValue": "={{$json[\"Email\"]}}",
+              "rightValue": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            },
+            {
+              "id": "07f8bfdf-368f-46a9-9600-be3556706046",
+              "leftValue": "={{$json[\"Email\"]}}",
+              "rightValue": "^(?:info|support|sales|admin|no[-.]?reply|noreply|contact|help|service|marketing|team|hello|hi)@",
+              "operator": {
+                "type": "string",
+                "operation": "notRegex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2981a919-48bf-4808-b6ec-162c0d90bb2e",
+      "name": "Email Validation1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -160,
+        1200
+      ],
+      "typeVersion": 2.2,
+      "notes": "Validates email format and filters generic emails"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input items\nconst items = $input.all();\n\n// Config - Updated to start from current date\nconst RAMP_START = new Date('2025-09-21'); // Changed from '2025-09-28'\nconst LIMIT_BY_WEEK = [150];  // weeks 1..4+, capped at last\n\n// Week since start (1-based, clamped)\nconst msPerWeek = 7 * 24 * 60 * 60 * 1000;\nconst weeksSinceStart = Math.floor((Date.now() - RAMP_START.getTime()) / msPerWeek) + 1;\nconst dailyLimit = LIMIT_BY_WEEK[Math.min(weeksSinceStart, LIMIT_BY_WEEK.length) - 1];\n\n// Local \"today\" to avoid UTC boundary surprises (00:00 local)\nconst now = new Date();\nconst today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;\n\n// Get/reset counter\nlet sentToday = $getWorkflowStaticData('node');\nif (!sentToday.date || sentToday.date !== today) {\n  sentToday.date = today;\n  sentToday.count = 0;\n}\n\n// Calculate how many emails we can still send today\nconst remainingToday = Math.max(0, dailyLimit - sentToday.count);\n\nconsole.log('Rate limiting info:', { \n  today, \n  currentCount: sentToday.count, \n  dailyLimit, \n  remainingToday, \n  weeksSinceStart,\n  totalInputEmails: items.length\n});\n\n// If no emails can be sent today, return empty array\nif (remainingToday === 0) {\n  console.log('Daily limit reached - no emails will be sent');\n  return [];\n}\n\n// Take only the emails we can send today\nconst emailsToSend = items.slice(0, remainingToday);\n\n// DON'T UPDATE COUNTER HERE - wait until emails are actually sent\nconsole.log(`Preparing to send ${emailsToSend.length} emails. Current count: ${sentToday.count}/${dailyLimit}`);\n\n// Return ALL emails to send with metadata\nreturn emailsToSend.map((item, index) => ({\n  json: { \n    ...item.json, \n    canSend: true, \n    currentSentToday: sentToday.count,\n    dailyLimit, \n    weeksSinceStart,\n    batchSize: emailsToSend.length,\n    emailIndex: index + 1,\n    totalToSend: emailsToSend.length\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        1200
+      ],
+      "id": "e9072bb1-9d36-447d-adbc-072b07d0f4a1",
+      "name": "Rate Limiter"
+    },
+    {
+      "parameters": {
+        "jsCode": "YOUR_URL_HERE"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        1200
+      ],
+      "id": "972fc59d-ae31-456f-a33d-a532cadc81ea",
+      "name": "Email Creator"
+    },
+    {
+      "parameters": {
+        "url": "YOUR_GOOGLE_DRIVE_URL_HERE",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        1120
+      ],
+      "id": "b0ccebdf-30d7-4c84-a7f9-be201c0d9d93",
+      "name": "Download Resume",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "notes": "Downloads resume as binary data"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json.Email}}",
+        "subject": "={{ $json.emailSubject }}",
+        "message": "={{ $json.emailBody }}",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "id": "c1f4525d-ef9d-4b09-8ebc-8acc6936afa4",
+      "name": "Send Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1184,
+        1120
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": ""
+        }
+      },
+      "continueOnFail": true,
+      "notes": "Send email to actual recipient with resume"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "YOUR_RESOURCE_ID_HERE"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "YOUR_RESOURCE_ID_HERE"
+        },
+        "options": {}
+      },
+      "id": "7944b8ff-5c5f-4a52-9dc3-051ddf4bbb73",
+      "name": "Google Sheets - Read HR Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -608,
+        1200
+      ],
+      "typeVersion": 4.7,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": ""
+        }
+      },
+      "notes": "Import your HR contacts CSV to Google Sheets first"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "f01432f3-17ed-4174-a83e-7f9a1441db6b",
+      "name": "Remove Duplicates",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "position": [
+        -384,
+        1200
+      ],
+      "typeVersion": 2,
+      "notes": "Removes duplicate email addresses"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Update the counter for successfully sent email\nconst item = $input.first();\n\n// Get today's date\nconst now = new Date();\nconst today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;\n\n// Get/update counter\nlet sentToday = $getWorkflowStaticData('node');\nif (!sentToday.date || sentToday.date !== today) {\n  sentToday.date = today;\n  sentToday.count = 0;\n}\n\n// Increment counter by 1 for this successfully sent email\nsentToday.count += 1;\n\nconsole.log(`Email sent successfully to: ${item.json.Email}`);\nconsole.log(`Total sent today: ${sentToday.count}`);\n\n// Return the item with success status\nreturn [{\n  json: {\n    ...item.json,\n    emailStatus: 'sent',\n    totalSentToday: sentToday.count,\n    sentDate: new Date().toISOString(),\n    success: true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        1024
+      ],
+      "id": "7c19f252-c912-4bd2-b3d8-b786be7161dc",
+      "name": "Update Counter1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Handle failed email\nconst item = $input.first();\n\n// Extract error message if available\nlet errorMessage = 'Unknown error';\nif (item.json.error) {\n  errorMessage = typeof item.json.error === 'string' ? item.json.error : JSON.stringify(item.json.error);\n} else if (item.json.message) {\n  errorMessage = item.json.message;\n}\n\nconsole.log(`Email failed to send to: ${item.json.Email}`);\nconsole.log(`Error: ${errorMessage}`);\n\n// Return item with failed status\nreturn [{\n  json: {\n    ...item.json,\n    emailStatus: 'failed',\n    failureReason: errorMessage,\n    failedDate: new Date().toISOString(),\n    success: false\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        1216
+      ],
+      "id": "ad9ab70d-e834-4063-959b-673a34e9b8f9",
+      "name": "Handle Failures1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "YOUR_RESOURCE_ID_HERE"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "YOUR_RESOURCE_ID_HERE"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "emailSubject": "={{ $json.emailSubject }}",
+            "email ": "={{ $json.Email }}",
+            "Name ": "={{ $json.Name }}",
+            "Company ": "={{ $json.Company }}",
+            "status ": "={{ $json.emailStatus }}",
+            "sentDate ": "={{ $now.format('MM-DD HH:mm:ss') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "email ",
+              "displayName": "email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company ",
+              "displayName": "Company ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status ",
+              "displayName": "status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sentDate ",
+              "displayName": "sentDate ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "emailSubject",
+              "displayName": "emailSubject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "2bf38db3-2cf4-4d0f-877b-c4623a58eb04",
+      "name": "Log to Google Sheets1",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        2080,
+        1200
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": ""
+        }
+      },
+      "notes": "Log sent emails for tracking"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5afe75fb-0362-442c-b2d5-25873059a159",
+              "name": "emailStatus",
+              "value": "={{ $json.emailStatus }}",
+              "type": "string"
+            },
+            {
+              "id": "63ca4777-d636-4bbc-8e90-84b13485b820",
+              "name": "failureReason",
+              "value": "={{ $json.failureReason }}",
+              "type": "string"
+            },
+            {
+              "id": "8d5ea9a4-b935-492a-913c-7e3b644bb1de",
+              "name": "SNo",
+              "value": "={{ $('Download Resume').item.json.SNo }}",
+              "type": "number"
+            },
+            {
+              "id": "cd380045-b087-441f-9207-916ad351b779",
+              "name": "Name",
+              "value": "={{ $('Download Resume').item.json.Name }}",
+              "type": "string"
+            },
+            {
+              "id": "f897bb52-37a1-4979-b042-00bdbea25470",
+              "name": "Email",
+              "value": "={{ $('Download Resume').item.json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "3ac6efb9-23c2-4810-ad72-28a9bd1fdc01",
+              "name": "Title",
+              "value": "={{ $('Download Resume').item.json.Title }}",
+              "type": "string"
+            },
+            {
+              "id": "044f8868-2669-461f-ba70-bd067489d37b",
+              "name": "Company",
+              "value": "={{ $('Download Resume').item.json.Company }}",
+              "type": "string"
+            },
+            {
+              "id": "7cd30591-5fa5-497b-8eac-0732afd712db",
+              "name": "emailSubject",
+              "value": "={{ $('Download Resume').item.json.emailSubject }}",
+              "type": "string"
+            },
+            {
+              "id": "cf53b800-264f-4813-9da9-8c072f46356a",
+              "name": "firstName",
+              "value": "={{ $('Download Resume').item.json.firstName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1856,
+        1120
+      ],
+      "id": "0e9e507a-5f5c-46ae-ab59-1eef86544833",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -832,
+        1104
+      ],
+      "id": "2a227039-3249-4951-b273-93d11d84765d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "88364e2e-629a-43b0-8c40-30196f20b27c",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1408,
+        1120
+      ],
+      "id": "169445ba-9bcd-4746-8f03-1a2faded13f3",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        512,
+        1200
+      ],
+      "id": "508a76fb-7f4b-4394-ad19-67196242d979",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        736,
+        1120
+      ],
+      "id": "d94327ac-41c1-419f-9f04-a826840ec567",
+      "name": "Wait",
+      "webhookId": ""
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -832,
+        1296
+      ],
+      "id": "cbe59ee6-7042-4de6-b1c5-1502557f25d5",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "content": "## 1. Trigger & Data Import",
+        "height": 200,
+        "width": 300,
+        "color": 7
+      },
+      "id": "sticky-section-0-4clby6",
+      "name": "Section 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -758,
+        854
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 2. Data Cleanup & Validation",
+        "height": 200,
+        "width": 300,
+        "color": 7
+      },
+      "id": "sticky-section-1-fkxqdf",
+      "name": "Section 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        26,
+        950
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 3. Rate Limiting & Email Prep",
+        "height": 200,
+        "width": 300,
+        "color": 7
+      },
+      "id": "sticky-section-2-gzm32i",
+      "name": "Section 3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        922,
+        870
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 4. Send & Handle Email",
+        "height": 200,
+        "width": 300,
+        "color": 7
+      },
+      "id": "sticky-section-3-8qf0ea",
+      "name": "Section 4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1706,
+        774
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 5. Log Results",
+        "height": 200,
+        "width": 300,
+        "color": 7
+      },
+      "id": "sticky-section-4-w14ea",
+      "name": "Section 5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1498,
+        774
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Email Validation1": {
+      "main": [
+        [
+          {
+            "node": "Rate Limiter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limiter": {
+      "main": [
+        [
+          {
+            "node": "Email Creator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Creator": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Resume": {
+      "main": [
+        [
+          {
+            "node": "Send Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Gmail": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Read HR Data": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Email Validation1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Counter1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Failures1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Google Sheets1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Read HR Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Update Counter1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Failures1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Download Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Read HR Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "id": "c8GsZJyBQZa45oKb",
+  "tags": []
+}

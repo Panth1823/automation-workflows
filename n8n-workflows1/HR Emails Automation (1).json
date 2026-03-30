@@ -1,0 +1,673 @@
+{
+  "name": "HR Emails Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "amount": 180
+      },
+      "id": "c11e0b30-e6db-4fbf-8c92-8feba4190061",
+      "name": "Wait Between Emails1",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        464,
+        208
+      ],
+      "typeVersion": 1.1,
+      "webhookId": "34d7c15c-22d8-49b8-8240-0ed7fdc167de",
+      "notes": "Wait 30 seconds between each email to avoid rate limits"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "88d7ea8a-c3c3-4b6f-ac8a-aac877f13bda",
+              "leftValue": "={{$json[\"Email\"]}}",
+              "rightValue": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            },
+            {
+              "id": "07f8bfdf-368f-46a9-9600-be3556706046",
+              "leftValue": "={{$json[\"Email\"]}}",
+              "rightValue": "^(?:info|support|sales|admin|no[-.]?reply|noreply|contact|help|service|marketing|team|hello|hi)@",
+              "operator": {
+                "type": "string",
+                "operation": "notRegex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "877a2021-8148-43c1-a75a-aae26824001e",
+      "name": "Email Validation1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -432,
+        288
+      ],
+      "typeVersion": 2.2,
+      "notes": "Validates email format and filters generic emails"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input items\nconst items = $input.all();\n\n// Config - Updated to start from current date\nconst RAMP_START = new Date('2025-09-21'); // Changed from '2025-09-28'\nconst LIMIT_BY_WEEK = [20, 50, 100, 150];  // weeks 1..4+, capped at last\n\n// Week since start (1-based, clamped)\nconst msPerWeek = 7 * 24 * 60 * 60 * 1000;\nconst weeksSinceStart = Math.floor((Date.now() - RAMP_START.getTime()) / msPerWeek) + 1;\nconst dailyLimit = LIMIT_BY_WEEK[Math.min(weeksSinceStart, LIMIT_BY_WEEK.length) - 1];\n\n// Local \"today\" to avoid UTC boundary surprises (00:00 local)\nconst now = new Date();\nconst today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;\n\n// Get/reset counter\nlet sentToday = $getWorkflowStaticData('node');\nif (!sentToday.date || sentToday.date !== today) {\n  sentToday.date = today;\n  sentToday.count = 0;\n}\n\n// Calculate how many emails we can still send today\nconst remainingToday = Math.max(0, dailyLimit - sentToday.count);\n\nconsole.log('Rate limiting info:', { \n  today, \n  currentCount: sentToday.count, \n  dailyLimit, \n  remainingToday, \n  weeksSinceStart,\n  totalInputEmails: items.length\n});\n\n// If no emails can be sent today, return empty array\nif (remainingToday === 0) {\n  console.log('Daily limit reached - no emails will be sent');\n  return [];\n}\n\n// Take only the emails we can send today\nconst emailsToSend = items.slice(0, remainingToday);\n\n// DON'T UPDATE COUNTER HERE - wait until emails are actually sent\nconsole.log(`Preparing to send ${emailsToSend.length} emails. Current count: ${sentToday.count}/${dailyLimit}`);\n\n// Return ALL emails to send with metadata\nreturn emailsToSend.map((item, index) => ({\n  json: { \n    ...item.json, \n    canSend: true, \n    currentSentToday: sentToday.count,\n    dailyLimit, \n    weeksSinceStart,\n    batchSize: emailsToSend.length,\n    emailIndex: index + 1,\n    totalToSend: emailsToSend.length\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        288
+      ],
+      "id": "c6f9e385-65a4-4791-93b7-34aadf4aba62",
+      "name": "Rate Limiter"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Updated Email Creator without footer\nconst items = $input.all();\n\nreturn items.map(inputItem => {\n  const item = inputItem.json;\n\n  const firstName = item.Name ? item.Name.split(' ')[0] : 'there';\n  const company = item.Company || 'your organization';\n  const title = item.Title || 'hiring manager';\n\n  // Check if this is a follow-up email\n  const followUpCount = item.follow_up_count || 0;\n  const isFollowUp = followUpCount > 0;\n\n  // Follow-up email templates\n  const getFollowUpTemplate = (count, firstName, company) => {\n    const templates = {\n      1: {\n        subject: `Re: Frontend/Full-Stack Developer role at ${company}`,\n        body: `<p>Hi ${firstName},</p>\n        <p>I wanted to follow up on my previous email about the developer role at ${company}.</p>\n        <p>I understand you're busy, but I'm genuinely excited about the possibility of contributing to your team with my experience in React, PostgreSQL, and automation workflows.</p>\n        <p>Would a brief 10-minute call this week work for you?</p>\n        <p>Best,<br>Panth</p>`\n      },\n      2: {\n        subject: `Quick question about ${company}'s tech team`,\n        body: `<p>Hi ${firstName},</p>\n        <p>I've been following ${company}'s work and I'm impressed by your technical approach.</p>\n        <p>Given my experience building scalable applications and automation systems, I'd love to explore how I might contribute to your technical challenges.</p>\n        <p>If now isn't the right time, I completely understand. Would you prefer I reach back out in a few months?</p>\n        <p>Thanks,<br>Panth</p>`\n      },\n      3: {\n        subject: `Final check-in - ${firstName}`,\n        body: `<p>Hi ${firstName},</p>\n        <p>I'll keep this brief - I've reached out a few times about developer opportunities at ${company}.</p>\n        <p>If you're not the right person to speak with, could you kindly point me in the right direction? Or if there's no current fit, no worries at all!</p>\n        <p>Either way, I won't take up any more of your time after this.</p>\n        <p>Best wishes,<br>Panth</p>`\n      }\n    };\n    \n    return templates[count] || templates[1];\n  };\n\n  let subject, emailBody;\n\n  if (isFollowUp && followUpCount <= 3) {\n    const template = getFollowUpTemplate(followUpCount, firstName, company);\n    subject = template.subject;\n    emailBody = template.body;\n  } else {\n    const subjects = [\n      `Excited about Frontend/Full-Stack Developer role at ${company}`,\n      `Applying for Full-Stack Developer/Frontend Developer role at ${company}`,\n      `Passionate about building scalable web apps at ${company}`,\n      `Frontend Developer reaching out for potential role at ${company}`,\n    ];\n    subject = subjects[Math.floor(Math.random() * subjects.length)];\n\n    emailBody = `<p>Hi ${firstName},</p>\n\n<p>I'm Panth Shah, a Computer Science graduate with 1+ years of experience in <strong>No-Code and Full-Stack Web Design & Development</strong>, while also learning and building <strong>AI automation workflows</strong> as an added skill.</p>\n\n<p><strong>What I've delivered:</strong></p>\n<ul>\n  <li>Engineered responsive React + PostgreSQL applications, boosting engagement by 30–35%</li>\n  <li>Optimized backend APIs, reducing latency by 30% and improving user satisfaction</li>\n  <li>Designed user-friendly web interfaces and no-code solutions using Webflow</li>\n  <li>Built automation workflows with N8N, OpenAI & Supabase – enabling smarter systems as a bonus capability</li>\n</ul>\n\n<p>I believe my technical skills align well with ${company}'s innovative direction.</p>\n\n<p><strong>My profiles:</strong></p>\n<ul>\n  <li>Portfolio: <a href=\"https://bento.me/panth\">https://bento.me/panth</a></li>\n  <li>LinkedIn: <a href=\"https://www.linkedin.com/in/panth1823/\">https://www.linkedin.com/in/panth1823/</a></li>\n  <li>GitHub: <a href=\"https://github.com/Panth1823\">https://github.com/Panth1823</a></li>\n</ul>\n\n<p>I've attached my resume for your review. Would you be open to a brief 10-minute conversation about where my skills in frontend, full-stack, and automation could contribute at ${company}?</p>\n\n<p>Best regards,<br>\nPanth Shah<br>\n<a href=\"mailto:panthshah242@gmail.com\">panthshah242@gmail.com</a></p>`;\n  }\n\n  const subjectType = isFollowUp ? `followup_${followUpCount}` : 'initial';\n\n  return {\n    json: {\n      ...item,\n      emailSubject: subject,\n      emailBody: emailBody,\n      firstName: firstName,\n      subjectType: subjectType,\n      senderName: \"Panth Shah\",\n      senderEmail: \"panthshah242@gmail.com\",\n      isFollowUp: isFollowUp,\n      followUpCount: followUpCount,\n      emailHeaders: {\n        'X-Priority': '3',\n        'Importance': 'Normal',\n        'X-Mailer': 'N8N-Automation',\n        'Reply-To': 'panthshah242@gmail.com'\n      }\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        288
+      ],
+      "id": "e7519c25-7e88-476d-ba68-3e522e7d0091",
+      "name": "Email Creator"
+    },
+    {
+      "parameters": {
+        "url": "https://drive.google.com/uc?export=download&id=1lcVI2WjCH0gleXTLgWWm78s7yVFRKitT",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        688,
+        208
+      ],
+      "id": "0a828652-2c1b-4d40-b82b-7993d0c55fd0",
+      "name": "Download Resume",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "notes": "Downloads resume as binary data"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json.Email}}",
+        "subject": "={{ $json.emailSubject }}",
+        "message": "={{ $json.emailBody }}",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "id": "2d8c8738-bff9-40f3-bfa7-3e6131ea2cad",
+      "name": "Send Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        912,
+        208
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "cb664c42-26d3-42c9-813d-5b7797c0ae26",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cJfTHl8j5kZyIPTP",
+          "name": "Gmail account"
+        }
+      },
+      "continueOnFail": true,
+      "notes": "Send email to actual recipient with resume"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ppnhORx-3hJaYJql5jI48Zzijvn1zFKAHH2ifMrk3O8",
+          "mode": "list",
+          "cachedResultName": "Company Wise HR Contacts - HR Contacts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ppnhORx-3hJaYJql5jI48Zzijvn1zFKAHH2ifMrk3O8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1121278036,
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ppnhORx-3hJaYJql5jI48Zzijvn1zFKAHH2ifMrk3O8/edit#gid=1121278036"
+        },
+        "options": {}
+      },
+      "id": "f413c5da-7f7f-46e0-8838-25c91b2cda65",
+      "name": "Google Sheets - Read HR Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -880,
+        288
+      ],
+      "typeVersion": 4.7,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "173rvn1sA1sH3cJz",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Import your HR contacts CSV to Google Sheets first"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "ec09f83d-fecb-4b86-aaf7-93d34778bb01",
+      "name": "Remove Duplicates",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "position": [
+        -656,
+        288
+      ],
+      "typeVersion": 2,
+      "notes": "Removes duplicate email addresses"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Update the counter for successfully sent email\nconst item = $input.first();\n\n// Get today's date\nconst now = new Date();\nconst today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;\n\n// Get/update counter\nlet sentToday = $getWorkflowStaticData('node');\nif (!sentToday.date || sentToday.date !== today) {\n  sentToday.date = today;\n  sentToday.count = 0;\n}\n\n// Increment counter by 1 for this successfully sent email\nsentToday.count += 1;\n\nconsole.log(`Email sent successfully to: ${item.json.Email}`);\nconsole.log(`Total sent today: ${sentToday.count}`);\n\n// Return the item with success status\nreturn [{\n  json: {\n    ...item.json,\n    emailStatus: 'sent',\n    totalSentToday: sentToday.count,\n    sentDate: new Date().toISOString(),\n    success: true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        112
+      ],
+      "id": "9a96a69f-6b29-4c77-8bf9-977ffe9fbf62",
+      "name": "Update Counter1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Handle failed email\nconst item = $input.first();\n\n// Extract error message if available\nlet errorMessage = 'Unknown error';\nif (item.json.error) {\n  errorMessage = typeof item.json.error === 'string' ? item.json.error : JSON.stringify(item.json.error);\n} else if (item.json.message) {\n  errorMessage = item.json.message;\n}\n\nconsole.log(`Email failed to send to: ${item.json.Email}`);\nconsole.log(`Error: ${errorMessage}`);\n\n// Return item with failed status\nreturn [{\n  json: {\n    ...item.json,\n    emailStatus: 'failed',\n    failureReason: errorMessage,\n    failedDate: new Date().toISOString(),\n    success: false\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        304
+      ],
+      "id": "45b6b705-fd63-4597-8b96-a60a3bab0c5c",
+      "name": "Handle Failures1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1nO5qulxBJVXZSSdqqeZNqNCBPMQNDUibBvZGwO6G-Wo",
+          "mode": "list",
+          "cachedResultName": "HR Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nO5qulxBJVXZSSdqqeZNqNCBPMQNDUibBvZGwO6G-Wo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1nO5qulxBJVXZSSdqqeZNqNCBPMQNDUibBvZGwO6G-Wo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "emailSubject": "={{ $json.emailSubject }}",
+            "email ": "={{ $json.Email }}",
+            "Name ": "={{ $json.Name }}",
+            "Company ": "={{ $json.Company }}",
+            "status ": "={{ $json.emailStatus }}",
+            "sentDate ": "={{ $now.format('MM-DD HH:mm:ss') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "email ",
+              "displayName": "email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company ",
+              "displayName": "Company ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status ",
+              "displayName": "status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sentDate ",
+              "displayName": "sentDate ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "emailSubject",
+              "displayName": "emailSubject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "7a014aa6-2373-447f-8a46-9aad83d7a922",
+      "name": "Log to Google Sheets1",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1808,
+        288
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "173rvn1sA1sH3cJz",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Log sent emails for tracking"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5afe75fb-0362-442c-b2d5-25873059a159",
+              "name": "emailStatus",
+              "value": "={{ $json.emailStatus }}",
+              "type": "string"
+            },
+            {
+              "id": "63ca4777-d636-4bbc-8e90-84b13485b820",
+              "name": "failureReason",
+              "value": "={{ $json.failureReason }}",
+              "type": "string"
+            },
+            {
+              "id": "8d5ea9a4-b935-492a-913c-7e3b644bb1de",
+              "name": "SNo",
+              "value": "={{ $('Download Resume').item.json.SNo }}",
+              "type": "number"
+            },
+            {
+              "id": "cd380045-b087-441f-9207-916ad351b779",
+              "name": "Name",
+              "value": "={{ $('Download Resume').item.json.Name }}",
+              "type": "string"
+            },
+            {
+              "id": "f897bb52-37a1-4979-b042-00bdbea25470",
+              "name": "Email",
+              "value": "={{ $('Download Resume').item.json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "3ac6efb9-23c2-4810-ad72-28a9bd1fdc01",
+              "name": "Title",
+              "value": "={{ $('Download Resume').item.json.Title }}",
+              "type": "string"
+            },
+            {
+              "id": "044f8868-2669-461f-ba70-bd067489d37b",
+              "name": "Company",
+              "value": "={{ $('Download Resume').item.json.Company }}",
+              "type": "string"
+            },
+            {
+              "id": "7cd30591-5fa5-497b-8eac-0732afd712db",
+              "name": "emailSubject",
+              "value": "={{ $('Download Resume').item.json.emailSubject }}",
+              "type": "string"
+            },
+            {
+              "id": "cf53b800-264f-4813-9da9-8c072f46356a",
+              "name": "firstName",
+              "value": "={{ $('Download Resume').item.json.firstName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1584,
+        208
+      ],
+      "id": "4da3c6a2-edfb-4bd7-b3d3-df743dd7ad66",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1104,
+        288
+      ],
+      "id": "257d6222-1084-4f88-987f-4c4d3a28a677",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "88364e2e-629a-43b0-8c40-30196f20b27c",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1136,
+        208
+      ],
+      "id": "0f15d5cf-78aa-4d37-8826-2e798070e399",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        240,
+        288
+      ],
+      "id": "9eb0eac1-bf6b-4e79-881d-0c6d3e8b6b27",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "content": "## 📧 HR Email Automation Workflow\n\n### 🚀 Quick Setup (5 Steps)\n\n**STEP 1: Connect Accounts**\n- Gmail OAuth2 → For sending emails\n- Google Sheets OAuth2 → For contacts & tracking\n\n**STEP 2: Prepare Google Sheets**\n\n**Sheet 1 - HR Contacts** (Required columns):\n- Name\n- Email\n- Company\n- Title\n\n**Sheet 2 - Email Tracking Log** (Leave empty, auto-populated)\n\n**STEP 3: Configure Nodes with ⚠️ UPDATE tags**\n\n1️⃣ **Rate Limiter** → Change `RAMP_START` date to today\n\n2️⃣ **Email Creator** → Replace all `[PLACEHOLDERS]` with your info:\n   - [YOUR NAME]\n   - [YOUR_EMAIL]\n   - [YOUR_PORTFOLIO]\n   - [YOUR_LINKEDIN]\n   - Update achievements & skills\n\n3️⃣ **Download Resume** → Add your Google Drive resume link\n   - Right-click resume → Share → \"Anyone with link\"\n   - Use format: `https://drive.google.com/uc?export=download&id=FILE_ID`\n\n4️⃣ **Google Sheets - Read HR Data** → Connect Sheet 1\n\n5️⃣ **Log to Google Sheets** → Connect Sheet 2\n\n6️⃣ **Schedule Trigger** → Set daily send time (default: 10:30 AM)\n\n**STEP 4: Test Run**\n- Create test sheet with 2-3 contacts\n- Run workflow manually\n- Verify: email sent + resume attached + logged\n\n**STEP 5: Activate**\n- Switch to real contact sheet\n- Toggle workflow ON\n- Check logs daily first week\n\n---\n\n### ⚙️ How It Works\n\n**Daily Process:**\n1. Reads contacts from Google Sheet\n2. Removes duplicates\n3. Validates email formats\n4. Filters generic emails (info@, support@, etc.)\n5. Applies rate limiting (gradual ramp-up)\n6. Creates personalized emails\n7. Sends with 3-min delays\n8. Logs all attempts\n\n**Rate Limiting Schedule:**\n- Week 1: 20 emails/day\n- Week 2: 50 emails/day\n- Week 3: 100 emails/day\n- Week 4+: 150 emails/day\n\n**Safety Features:**\n- 3-minute delay between emails\n- Generic email filtering\n- Duplicate prevention\n- Failed send tracking\n- Gmail rate limit compliance\n\n---\n\n### 💡 Pro Tips\n\n✅ Test with dummy emails first\n✅ Keep HR sheet updated\n✅ Monitor tracking sheet daily\n✅ Adjust rate limits if needed\n✅ A/B test subject lines\n\n❌ Don't send to personal contacts without permission\n❌ Don't exceed Gmail's 500/day limit\n❌ Don't use for spam",
+        "height": 1052,
+        "width": 976,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -240,
+        -880
+      ],
+      "typeVersion": 1,
+      "id": "cd18dc5a-9937-4a46-9c53-c7df594ba199",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Wait Between Emails1": {
+      "main": [
+        [
+          {
+            "node": "Download Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Validation1": {
+      "main": [
+        [
+          {
+            "node": "Rate Limiter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limiter": {
+      "main": [
+        [
+          {
+            "node": "Email Creator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Creator": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Resume": {
+      "main": [
+        [
+          {
+            "node": "Send Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Gmail": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Read HR Data": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Email Validation1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Counter1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Failures1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Google Sheets1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Read HR Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Update Counter1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Failures1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait Between Emails1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "d201323c-5312-4f06-8427-823e18d5c15e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4b3e4819e187f0e6bb46037a1f4d87a4a987cc4521fb3e706ce45fca5ff7a5d1"
+  },
+  "id": "7aOlWHAvo7aRwE1r",
+  "tags": []
+}
