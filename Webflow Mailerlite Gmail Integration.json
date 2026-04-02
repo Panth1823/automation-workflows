@@ -1,0 +1,365 @@
+{
+  "name": "ThinkSage – Contact Form → MailerLite + Gmail",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "thinksage-contact",
+        "options": {}
+      },
+      "id": "54828b06-de43-42b3-9cca-e935f0a24a74",
+      "name": "Webflow Form Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        224
+      ],
+      "webhookId": "abc00001-0000-0000-0000-000000000001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ ($json.body.payload.data.category ?? $json.body.payload.data.Category ?? '').toString().trim().toLowerCase() }}",
+              "operation": "equal",
+              "value2": "jobseeker"
+            }
+          ]
+        }
+      },
+      "id": "d9b6a7f2-32a2-4a7a-ae7f-4ad53b8a1111",
+      "name": "IF - Jobseeker",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ ($json.body.payload.data.category ?? $json.body.payload.data.Category ?? '').toString().trim().toLowerCase() }}",
+              "operation": "equal",
+              "value2": "college"
+            }
+          ]
+        }
+      },
+      "id": "6a3d9d4a-9545-4f5d-b0ef-b36f18c02222",
+      "name": "IF - College",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ ($json.body.payload.data.category ?? $json.body.payload.data.Category ?? '').toString().trim().toLowerCase() }}",
+              "operation": "equal",
+              "value2": "business"
+            }
+          ]
+        }
+      },
+      "id": "b1f7b93f-8f35-4b0d-8a41-9102fdab3333",
+      "name": "IF - Business",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://connect.mailerlite.com/api/subscribers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_MAILERLITE_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ email: $('Webflow Form Webhook').item.json.body.payload.data.Email || $('Webflow Form Webhook').item.json.body.payload.data.email, fields: { name: $('Webflow Form Webhook').item.json.body.payload.data.Name || $('Webflow Form Webhook').item.json.body.payload.data.name, phone: $('Webflow Form Webhook').item.json.body.payload.data.Phone || $('Webflow Form Webhook').item.json.body.payload.data.phone }, groups: ['183562324554024728'] }) }}",
+        "options": {}
+      },
+      "id": "c94d60b3-97f3-48d7-8605-6aa515a14a6a",
+      "name": "MailerLite – Jobseeker",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -208,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://connect.mailerlite.com/api/subscribers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_MAILERLITE_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ email: $('Webflow Form Webhook').item.json.body.payload.data.Email || $('Webflow Form Webhook').item.json.body.payload.data.email, fields: { name: $('Webflow Form Webhook').item.json.body.payload.data.Name || $('Webflow Form Webhook').item.json.body.payload.data.name, phone: $('Webflow Form Webhook').item.json.body.payload.data.Phone || $('Webflow Form Webhook').item.json.body.payload.data.phone }, groups: ['183562344913175616'] }) }}",
+        "options": {}
+      },
+      "id": "51d53339-5b2c-418d-9c37-16c664af53cf",
+      "name": "MailerLite – College",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -208,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://connect.mailerlite.com/api/subscribers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_MAILERLITE_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ email: $('Webflow Form Webhook').item.json.body.payload.data.Email || $('Webflow Form Webhook').item.json.body.payload.data.email, fields: { name: $('Webflow Form Webhook').item.json.body.payload.data.Name || $('Webflow Form Webhook').item.json.body.payload.data.name, phone: $('Webflow Form Webhook').item.json.body.payload.data.Phone || $('Webflow Form Webhook').item.json.body.payload.data.phone }, groups: ['183562409521186079'] }) }}",
+        "options": {}
+      },
+      "id": "9e809876-a349-42a0-9e6d-13b504a57f43",
+      "name": "MailerLite – Business",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -208,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webflow Form Webhook').item.json.body.payload.data.Email || $('Webflow Form Webhook').item.json.body.payload.data.email }}",
+        "subject": "We've received your message – ThinkSage",
+        "message": "<p>Hi {{ $('Webflow Form Webhook').item.json.body.payload.data.Name || $('Webflow Form Webhook').item.json.body.payload.data.name }},</p><p>Thank you for reaching out to ThinkSage! We've received your enquiry and our team will get back to you within 1–2 business days.</p><p>Best regards,<br>ThinkSage Team</p>",
+        "options": {}
+      },
+      "id": "2126920d-c59b-4fb2-bd1d-cff9637b51fa",
+      "name": "Gmail – Jobseeker Confirm",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        16
+      ],
+      "webhookId": "1f727731-3e96-4f4a-afc8-491d156983f0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2Xa7GsVus0kv22N3",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webflow Form Webhook').item.json.body.payload.data.Email || $('Webflow Form Webhook').item.json.body.payload.data.email }}",
+        "subject": "We've received your message – ThinkSage",
+        "message": "<p>Hi {{ $('Webflow Form Webhook').item.json.body.payload.data.Name || $('Webflow Form Webhook').item.json.body.payload.data.name }},</p><p>Thank you for reaching out to ThinkSage! We're excited to explore training collaboration with your institution. Our team will be in touch shortly.</p><p>Best regards,<br>ThinkSage Team</p>",
+        "options": {}
+      },
+      "id": "1b8b755a-f97c-43f1-9d8f-8cbf4f192e5a",
+      "name": "Gmail – College Confirm",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        224
+      ],
+      "webhookId": "161153a3-330f-440c-aae8-e754ba117842",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2Xa7GsVus0kv22N3",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webflow Form Webhook').item.json.body.payload.data.Email || $('Webflow Form Webhook').item.json.body.payload.data.email }}",
+        "subject": "We've received your message – ThinkSage",
+        "message": "<p>Hi {{ $('Webflow Form Webhook').item.json.body.payload.data.Name || $('Webflow Form Webhook').item.json.body.payload.data.name }},</p><p>Thank you for reaching out to ThinkSage! We look forward to exploring a partnership with your organization. Our team will be in touch shortly.</p><p>Best regards,<br>ThinkSage Team</p>",
+        "options": {}
+      },
+      "id": "b662c1cb-77df-49b4-b11e-31fe06fd653b",
+      "name": "Gmail – Business Confirm",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        416
+      ],
+      "webhookId": "3906af40-66c2-4459-8f63-c2359e7da68e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2Xa7GsVus0kv22N3",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webflow Form Webhook": {
+      "main": [
+        [
+          {
+            "node": "IF - Jobseeker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Jobseeker": {
+      "main": [
+        [
+          {
+            "node": "MailerLite – Jobseeker",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - College",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - College": {
+      "main": [
+        [
+          {
+            "node": "MailerLite – College",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - Business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Business": {
+      "main": [
+        [
+          {
+            "node": "MailerLite – Business",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "MailerLite – Jobseeker": {
+      "main": [
+        [
+          {
+            "node": "Gmail – Jobseeker Confirm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MailerLite – College": {
+      "main": [
+        [
+          {
+            "node": "Gmail – College Confirm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MailerLite – Business": {
+      "main": [
+        [
+          {
+            "node": "Gmail – Business Confirm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "828214af-0670-4045-9c4d-877f0a67254d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cb0154973bcd92f7ef5547aed2efb328b5df5bb198f16b309c8561141355ab93"
+  },
+  "id": "LgLW18GMj5OeojbC",
+  "tags": []
+}
