@@ -1,0 +1,508 @@
+{
+  "name": "Career Space - Reddit Topics & Comments Extractor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "214f96ca-687d-4f28-a447-1dd32cec99c0",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -992,
+        16
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/jobs/top.json?limit=8&t=day",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-career-bot/1.0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "343ea05a-66be-4f43-b878-98a9b82a04ff",
+      "name": "r/jobs — Top Posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -752,
+        -208
+      ],
+      "typeVersion": 4.2,
+      "notes": "r/jobs | Top posts of the day | 2.1M members"
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/careerguidance/top.json?limit=8&t=day",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-career-bot/1.0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "46a6b6ab-faeb-46a0-b39c-2b3f61aa64d8",
+      "name": "r/careerguidance — Top Posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -752,
+        -48
+      ],
+      "typeVersion": 4.2,
+      "notes": "r/careerguidance | Top posts of the day | 950K members"
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/RemoteJobs/top.json?limit=8&t=day",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-career-bot/1.0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0cbaa826-2197-4b97-bf8a-3711c5ff85c9",
+      "name": "r/cscareerquestions — Top Posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -752,
+        112
+      ],
+      "typeVersion": 4.2,
+      "notes": "r/cscareerquestions | Top posts of the day | 800K members"
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/resumes/top.json?limit=8&t=day",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-career-bot/1.0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "23e83ff1-032e-4fe3-80a5-e8757f0fa58e",
+      "name": "r/resumes — Top Posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -752,
+        272
+      ],
+      "typeVersion": 4.2,
+      "notes": "r/resumes | Top posts of the day | 320K members"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "id": "401db5b7-9583-43d1-add1-f3014712313d",
+      "name": "Merge All Subreddits",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        -512,
+        32
+      ],
+      "typeVersion": 3.1
+    },
+    {
+      "parameters": {
+        "jsCode": "// Flatten Reddit .json top posts into clean post objects\nconst results = [];\n\nfor (const item of $input.all()) {\n  const json = item.json;\n  if (!json.data || !json.data.children) continue;\n\n  for (const child of json.data.children) {\n    const post = child.data;\n    if (!post || !post.title) continue;\n    if (post.selftext === '[removed]' || post.selftext === '[deleted]') continue;\n\n    results.push({\n      json: {\n        subreddit: post.subreddit || '',\n        post_id: post.id || '',\n        title: post.title || '',\n        text: post.selftext || '',\n        score: post.score || 0,\n        num_comments: post.num_comments || 0,\n        permalink: post.permalink || '',\n        comments_url: `https://www.reddit.com${post.permalink}.json?limit=5&sort=top`\n      }\n    });\n  }\n}\n\nresults.sort((a, b) => b.json.score - a.json.score);\nreturn results;"
+      },
+      "id": "e363ee06-d982-462f-9b6c-88b54d2a3d44",
+      "name": "Flatten Posts",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -288,
+        32
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.comments_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-career-bot/1.0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0e342697-c64b-4a8b-becd-6696f1d77838",
+      "name": "Fetch Top Comments",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -64,
+        32
+      ],
+      "typeVersion": 4.2,
+      "notes": "Fetches top 5 comments per post. Reddit returns [postListing, commentsListing] — n8n splits this into 2 items per post."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ✅ FIXED: Reddit's comments endpoint returns [postListing, commentsListing] as a JSON array.\n// n8n's HTTP Request node SPLITS that array into 2 separate items per post.\n// So for 32 posts → 64 items arrive here, in pairs:\n//   item[0] = post listing  (kind: 'Listing', data.children[0].data = post)\n//   item[1] = comments listing (kind: 'Listing', data.children[] = comments)\n//   item[2] = next post listing\n//   item[3] = next comments listing ... and so on\n\nconst allItems = $input.all();\nconst results = [];\n\n// Process in pairs: even index = post, odd index = comments\nfor (let i = 0; i < allItems.length; i += 2) {\n  const postItem = allItems[i]?.json;\n  const commentsItem = allItems[i + 1]?.json;\n\n  if (!postItem || !commentsItem) continue;\n\n  // Extract post data from the post listing\n  const postData = postItem?.data?.children?.[0]?.data;\n  if (!postData) continue;\n\n  // Extract comments from the comments listing\n  const commentsChildren = commentsItem?.data?.children || [];\n  const topComments = commentsChildren\n    .filter(c =>\n      c.kind === 't1' &&\n      c.data?.body &&\n      !c.data?.stickied &&\n      c.data.body !== '[deleted]' &&\n      c.data.body !== '[removed]'\n    )\n    .slice(0, 5)\n    .map(c => c.data.body.substring(0, 300));\n\n  results.push({\n    json: {\n      subreddit: postData.subreddit || '',\n      title: postData.title || '',\n      post_text: postData.selftext || '',\n      score: postData.score || 0,\n      num_comments: postData.num_comments || 0,\n      url: `https://reddit.com${postData.permalink}`,\n      top_comments: topComments.length > 0 ? topComments : ['(no comments yet)']\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "a62b5179-a0c9-4b3c-b627-254df64504f9",
+      "name": "Extract Comments",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        160,
+        32
+      ],
+      "typeVersion": 2,
+      "notes": "FIXED: Processes items in pairs (even = post listing, odd = comments listing) to match how n8n splits Reddit's array response."
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Subreddit: r/{{ $json.subreddit }}\nPost Title: {{ $json.title }}\nPost Body: {{ $json.post_text || '(no body)' }}\nUpvotes: {{ $json.score }}\nComment Count: {{ $json.num_comments }}\n\nTop Comments:\n{{ $json.top_comments.map((c, i) => `[${i+1}] ${c}`).join('\\n') }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a career content research analyst. You receive a Reddit post (title + body) along with its top comments. Your job is to extract structured insights for career content creation.\n\nAnalyze both the post AND the comments together — comments often reveal the real pain points and opinions that the post itself doesn't show.\n\nExtract the following:\n1. Summary: One neutral sentence (≤20 words) describing what this post and thread is about.\n2. Pain point: The core problem or frustration expressed — from the poster's OR commenters' perspective. ≤15 words. First person style (e.g. 'Getting ghosted after final round interviews...').\n3. Community sentiment: What is the overall tone of the comments? One of: Frustrated | Hopeful | Mixed | Supportive | Skeptical\n4. Top insight from comments: The most useful or surprising thing said in the comments. ≤20 words.\n5. Content angles: 2–3 actionable content ideas that directly address the pain point. Each ≤10 words.\n\nOutput valid JSON only. No markdown, no commentary. Match the schema exactly."
+        }
+      },
+      "id": "32fbbabb-ae55-4f28-b6e3-6c7cd2908b87",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        384,
+        32
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "id": "7ce05e02-1ceb-4703-9c38-c5ee24887713",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        336,
+        352
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "kbW25iDU5jvZPvDH",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"summary\": \"<1 sentence, ≤20 words, neutral overview of post + thread>\",\n  \"pain_point\": \"<1 sentence, ≤15 words, core frustration from post or comments>\",\n  \"community_sentiment\": \"<one of: Frustrated | Hopeful | Mixed | Supportive | Skeptical>\",\n  \"top_comment_insight\": \"<most useful/surprising thing said in comments, ≤20 words>\",\n  \"content_angle\": [\n    \"<idea 1: ≤10 words>\",\n    \"<idea 2: ≤10 words>\",\n    \"<idea 3: ≤10 words, optional>\"\n  ]\n}",
+        "autoFix": true
+      },
+      "id": "5f1e7b7c-8d39-46c0-85e8-6dba42186871",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        512,
+        272
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1TauiEkw7bl2yk2SPVpn6fW0ktplqxeME1UtqbMaPQI8",
+          "mode": "list",
+          "cachedResultName": "Career Topics",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TauiEkw7bl2yk2SPVpn6fW0ktplqxeME1UtqbMaPQI8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TauiEkw7bl2yk2SPVpn6fW0ktplqxeME1UtqbMaPQI8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Source": "={{ $('Extract Comments').item.json.subreddit }}",
+            "Summary": "={{ $json.output.summary }}",
+            "Pain Point": "={{ $json.output.pain_point }}",
+            "Content Angle": "={{ $json.output.content_angle.join(' | ') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pain Point",
+              "displayName": "Pain Point",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Content Angle",
+              "displayName": "Content Angle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "id": "57310f4f-55d5-4e75-a412-400ede633bbf",
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        832,
+        32
+      ],
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KXw7mOPSGBu1qOjG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Career Space — Reddit Topics & Comments Extractor\n\n\n\n\n## SUBREDDITS\n1. r/jobs — 2.1M members\n2. r/careerguidance — 950K members\n3. r/RemoteJobs — 2.1M members\n4. r/resumes — 320K members\n\n## OUTPUT COLUMNS\nSource | Post URL | Summary | Pain Point |\nCommunity Sentiment | Top Comment Insight | Content Angle",
+        "height": 436,
+        "width": 780
+      },
+      "id": "3ed635e7-ed1a-4145-9e78-44c72f39e573",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1856,
+        -112
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "r/jobs — Top Posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "r/careerguidance — Top Posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "r/cscareerquestions — Top Posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "r/resumes — Top Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "r/jobs — Top Posts": {
+      "main": [
+        [
+          {
+            "node": "Merge All Subreddits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "r/careerguidance — Top Posts": {
+      "main": [
+        [
+          {
+            "node": "Merge All Subreddits",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "r/cscareerquestions — Top Posts": {
+      "main": [
+        [
+          {
+            "node": "Merge All Subreddits",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "r/resumes — Top Posts": {
+      "main": [
+        [
+          {
+            "node": "Merge All Subreddits",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge All Subreddits": {
+      "main": [
+        [
+          {
+            "node": "Flatten Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten Posts": {
+      "main": [
+        [
+          {
+            "node": "Fetch Top Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Top Comments": {
+      "main": [
+        [
+          {
+            "node": "Extract Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Comments": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e7b9a0cc-cbab-481a-b1b0-92b5b40f9bcc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cb0154973bcd92f7ef5547aed2efb328b5df5bb198f16b309c8561141355ab93"
+  },
+  "id": "X9YQ8UavxMiD0cXO",
+  "tags": []
+}

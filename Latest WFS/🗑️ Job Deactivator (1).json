@@ -1,0 +1,448 @@
+{
+  "name": "🗑️ Job Deactivator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 72
+            }
+          ]
+        }
+      },
+      "id": "a92d9ce1-dd67-4309-ad2c-e5a80142a4f3",
+      "name": "⏰ Every 3 Days",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT job_hash, apply_url, company, job_title\nFROM jobs\nWHERE status = 'active'\nORDER BY created_at ASC;",
+        "options": {}
+      },
+      "id": "1b9aa52c-025f-4c8c-b240-3989a6ed0dd1",
+      "name": "📥 Fetch Active Jobs",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "JGTnrTabIYT318Du",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter out jobs with empty or invalid URLs\nconst jobs = $input.all();\nconst valid = [];\nconst skipped = [];\n\nfor (const item of jobs) {\n  const url = (item.json.apply_url || '').trim();\n  if (!url || url.length < 10 || !url.startsWith('http')) {\n    skipped.push(item.json.job_title || 'unknown');\n    continue;\n  }\n  valid.push({ json: { ...item.json } });\n}\n\nif (skipped.length > 0) {\n  console.log(`⚠ Skipped ${skipped.length} jobs with invalid URLs`);\n}\nconsole.log(`📋 Checking ${valid.length} job URLs`);\n\nif (valid.length === 0) {\n  return [{ json: { _no_jobs: true } }];\n}\nreturn valid;"
+      },
+      "id": "df05adec-4ac7-46b3-8ba7-5737bb88fa18",
+      "name": "🔧 Prepare URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "HEAD",
+        "url": "={{ $json.apply_url }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 5
+            }
+          },
+          "redirect": {
+            "redirect": {
+              "maxRedirects": 5
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          },
+          "timeout": 5000
+        }
+      },
+      "id": "447279f3-7435-4b8c-9d51-f97e79ac2588",
+      "name": "🔗 Check URLs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const httpItems = $input.all();\nconst cfgItems  = $('🔧 Prepare URLs').all();\n\nif (cfgItems.length === 1 && cfgItems[0].json._no_jobs) {\n  return [{ json: { _no_dead_jobs: true } }];\n}\n\nconst deadJobs = [];\nlet aliveCount = 0, errorCount = 0;\n\nfor (let i = 0; i < httpItems.length; i++) {\n  const http = httpItems[i].json;\n  const job  = cfgItems[i]?.json || {};\n  if (!job.job_hash) continue;\n\n  const statusCode = http.statusCode || http.status || null;\n  \n  // FIX 1: Properly stringify error objects\n  const errMsg = JSON.stringify(http.error || http.message || '').toLowerCase();\n\n  let isDead = false;\n  let reason = '';\n\n  if (errMsg.includes('enotfound') || errMsg.includes('getaddrinfo')) {\n    isDead = true; reason = 'DNS_FAIL';\n  } else if (errMsg.includes('econnrefused')) {\n    isDead = true; reason = 'CONN_REFUSED';\n  } else if (statusCode === 404 || statusCode === 410) {\n    isDead = true; reason = `HTTP_${statusCode}`;\n  } \n  // FIX 2: Detect soft-404s — redirect to a DIFFERENT path = job removed\n  else if ((statusCode === 301 || statusCode === 302 || statusCode === 307) && http.headers?.location) {\n    const originalPath = new URL(job.apply_url).pathname;\n    const redirectPath = new URL(http.headers.location, job.apply_url).pathname;\n    // If redirected away from the job-specific path (e.g. to /jobs), it's dead\n    if (!redirectPath.includes(originalPath) && (\n      redirectPath.endsWith('/jobs') || \n      redirectPath.endsWith('/careers') ||\n      redirectPath === '/'\n    )) {\n      isDead = true; reason = `SOFT_404_REDIRECT`;\n    } else {\n      aliveCount++;\n    }\n  } else if (http.error) {\n    errorCount++; // transient error, keep alive\n  } else {\n    aliveCount++;\n  }\n\n  if (isDead) {\n    console.log(`💀 DEAD [${reason}]: ${job.company} | ${job.job_title}`);\n    deadJobs.push(job);\n  }\n}\n\nconsole.log(`✅ Alive: ${aliveCount} | 💀 Dead: ${deadJobs.length} | ⚠ Errors: ${errorCount}`);\n\nif (deadJobs.length === 0) {\n  return [{ json: { _no_dead_jobs: true, alive: aliveCount, errors: errorCount } }];\n}\nreturn deadJobs.map(j => ({ json: j }));"
+      },
+      "id": "85fe820d-c6bd-4828-98b9-c05ea6519f10",
+      "name": "🧠 Find Dead Jobs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "has-dead",
+              "leftValue": "={{ $json._no_dead_jobs }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5c663107-c11d-4a66-93cc-6fc373c33771",
+      "name": "🔀 Has Dead Jobs?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE jobs SET status = 'inactive' WHERE job_hash = '{{ $json.job_hash }}';",
+        "options": {}
+      },
+      "id": "008e4442-d1ba-4905-bca6-affc62391d06",
+      "name": "❌ Mark Inactive (Supabase)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1344,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "JGTnrTabIYT318Du",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1Fazi5DwKujtGK22atp9c1EWhOxOFk82Mz39ErIkngpc",
+          "mode": "list",
+          "cachedResultName": "Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Fazi5DwKujtGK22atp9c1EWhOxOFk82Mz39ErIkngpc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Fazi5DwKujtGK22atp9c1EWhOxOFk82Mz39ErIkngpc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "job_hash": "={{json.job_hash }}"
+          },
+          "matchingColumns": [
+            "job_hash"
+          ],
+          "schema": [
+            {
+              "id": "job_hash",
+              "displayName": "job_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Job Title",
+              "displayName": "Job Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Work Mode",
+              "displayName": "Work Mode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Employment Type",
+              "displayName": "Employment Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Apply URL",
+              "displayName": "Apply URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ATS",
+              "displayName": "ATS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Salary",
+              "displayName": "Salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "success",
+              "displayName": "success",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "403c7115-f86b-4481-bd47-56aa691426d5",
+      "name": "📊 Mark Inactive (Google Sheet)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1568,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KXw7mOPSGBu1qOjG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Job Deactivator\n\nRuns every 3 days and checks all active job listings. Any with a dead URL gets marked `inactive` in both Supabase and Google Sheet.\n\n📄 [Google Sheet](https://docs.google.com/spreadsheets/d/1Fazi5DwKujtGK22atp9c1EWhOxOFk82Mz39ErIkngpc)\n--- \n\n## 📽️[Workflow Walkthorugh](https://drive.google.com/file/d/1AQXt4d5utO9yWXKi8IwwZOAM71n9mT2g/view?usp=sharing)\n\n---\n##  Companion to Job Scraper — must use the same Supabase `jobs` table and Google Sheet.\n\n\n## How It Works\n1. Fetches all `status = active` jobs from Supabase\n2. Skips any with missing/invalid URLs\n3. Sends a HEAD request (batch of 5) to each `apply_url`\n4. Flags job as dead if:\n   - `404` or `410` response\n   - DNS failure or connection refused\n   - Redirect to `/jobs`, `/careers`, or `/` (soft-404)\n5. Updates `status = inactive` in Supabase + Google Sheet\n\nTransient errors (timeouts etc.) are ignored — job stays active.\n\n\n## Setup\n1. Import workflow into n8n\n2. Connect same **Supabase (Postgres)** + **Google Sheets** credentials as Job Scraper\n3. Activate\n\n\n## Customise\n- **Check frequency** → edit Every 3 Days trigger node\n- **Add more soft-404 patterns** → edit the `Find Dead Jobs` node (look for `SOFT_404_REDIRECT` block)",
+        "height": 944,
+        "width": 832
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        464,
+        -1008
+      ],
+      "typeVersion": 1,
+      "id": "c729f4b1-ab38-4e83-b304-106b922840ad",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "⏰ Every 3 Days": {
+      "main": [
+        [
+          {
+            "node": "📥 Fetch Active Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📥 Fetch Active Jobs": {
+      "main": [
+        [
+          {
+            "node": "🔧 Prepare URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧠 Find Dead Jobs": {
+      "main": [
+        [
+          {
+            "node": "🔀 Has Dead Jobs?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 Has Dead Jobs?": {
+      "main": [
+        [
+          {
+            "node": "❌ Mark Inactive (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ Mark Inactive (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "📊 Mark Inactive (Google Sheet)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Prepare URLs": {
+      "main": [
+        [
+          {
+            "node": "🔗 Check URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔗 Check URLs": {
+      "main": [
+        [
+          {
+            "node": "🧠 Find Dead Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "saveManualExecutions": false
+  },
+  "versionId": "d45251ad-e3a5-4827-bb95-4a037c37c294",
+  "meta": {
+    "instanceId": "cb0154973bcd92f7ef5547aed2efb328b5df5bb198f16b309c8561141355ab93"
+  },
+  "id": "6e3YfHdrSvh4Kwk8",
+  "tags": []
+}

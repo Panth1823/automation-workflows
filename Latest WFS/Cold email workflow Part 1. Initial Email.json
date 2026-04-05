@@ -1,0 +1,866 @@
+{
+  "name": "Cold email workflow Part 1. Initial Email",
+  "nodes": [
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "Email",
+        "options": {
+          "removeOtherFields": false
+        }
+      },
+      "id": "5636f503-1450-4813-a815-1cdebbae9a80",
+      "name": "Remove Duplicate Emails",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "email-check",
+              "leftValue": "={{ /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test($json['Email']) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "name-check",
+              "leftValue": "={{ ($json['Name'] || '').trim().length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6d66933a-e7ca-41d4-824f-87915f69684f",
+      "name": "Validate Email and Name",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -1120,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "b5b38295-e698-4b1a-bf2a-f028f681cc85",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -896,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o",
+          "mode": "list",
+          "cachedResultName": "Test Response"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 860761689,
+          "mode": "list",
+          "cachedResultName": "Tracking"
+        },
+        "options": {}
+      },
+      "id": "21b155b0-f6a3-4dea-9f55-4b5f79250328",
+      "name": "Read Tracking Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -672,
+        288
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KXw7mOPSGBu1qOjG",
+          "name": "Google Sheets account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── Per-item duplicate check — runs fresh each loop iteration ──\nconst BLOCKING = ['sent','followup_1','completed','replied','unsubscribed'];\n\n// Current lead from the loop (1 item at a time)\nconst lead = $('Loop Over Items').item.json;\nconst leadEmail = (lead['Email'] || '').toLowerCase().trim();\n\n// Check tracking sheet rows\nconst alreadyTracked = $input.all().some(row => {\n  const rowEmail = (row.json['Email'] || row.json['email'] || '').toLowerCase().trim();\n  const rowStatus = (row.json['status'] || row.json['Status'] || '').toLowerCase().trim();\n  return rowEmail === leadEmail && BLOCKING.includes(rowStatus);\n});\n\nif (alreadyTracked) return [];\nreturn [{ json: lead }];\n"
+      },
+      "id": "11925875-cb4b-44f8-affc-53ec5e463081",
+      "name": "Skip If Already In Sequence",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        288
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "college-rule",
+                    "leftValue": "={{ $json['partner_type'] }}",
+                    "rightValue": "College",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "influencer-rule",
+                    "leftValue": "={{ $json['partner_type'] }}",
+                    "rightValue": "Influencer",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "brand-rule",
+                    "leftValue": "={{ $json['partner_type'] }}",
+                    "rightValue": "Brand",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "e425837d-8eb0-41e9-afb0-9acca889ec9b",
+      "name": "Route by Partner Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c-re",
+              "name": "recipientEmail",
+              "type": "string",
+              "value": "={{ $json['Email'] }}"
+            },
+            {
+              "id": "c-rn",
+              "name": "recipientName",
+              "type": "string",
+              "value": "={{ $json['Name'] }}"
+            },
+            {
+              "id": "c-pt",
+              "name": "partnerType",
+              "type": "string",
+              "value": "College"
+            },
+            {
+              "id": "c-sub",
+              "name": "emailSubject",
+              "type": "string",
+              "value": "=Collaboration opportunity with [YOUR COMPANY] — for {{ $json['Company'] || 'your' }} students"
+            },
+            {
+              "id": "c-bod",
+              "name": "emailBody",
+              "type": "string",
+              "value": "=<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;line-height:1.6\"><p>Hi {{ $json['Name'].split(' ')[0] }},</p><p>We came across <strong>{{ $json['Company'] || 'your institution' }}</strong> and would love to explore a campus partnership with you!</p><p>Here is what a partnership with <strong>[YOUR COMPANY]</strong> looks like:</p><ul style=\"padding-left:20px\"><li style=\"margin-bottom:6px\">🎓 Guest lectures and workshops by our team for your students</li><li style=\"margin-bottom:6px\">💼 Internship and placement opportunities at [YOUR COMPANY]</li><li style=\"margin-bottom:6px\">🏆 Sponsored hackathons, case study competitions, and prizes</li><li style=\"margin-bottom:6px\">📚 Free access to [YOUR PRODUCT] for students and faculty</li></ul><p>We already partner with leading institutions and have helped <strong>500+ students</strong> kickstart their careers.</p><p>I'd love to jump on a quick 20-minute call to explore this — no pitch, just a genuine conversation.</p><p style=\"margin-top:24px\"><a href=\"https://calendly.com/REPLACE_WITH_CALENDAR_LINK\" style=\"background:#1D4ED8;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;font-weight:bold\">📅 Schedule a Chat</a></p><p style=\"margin-top:24px\">Looking forward to it,<br><strong>[YOUR NAME]</strong><br>[YOUR TITLE] · [YOUR COMPANY]<br>[YOUR PHONE] · [YOUR EMAIL]</p><hr style=\"border:none;border-top:1px solid #eee;margin:28px 0\"><p style=\"font-size:11px;color:#999\">You received this because you filled out our partner interest form.<br><a href=\"mailto:[YOUR EMAIL]?subject=Unsubscribe\" style=\"color:#999\">Unsubscribe</a></p></body></html>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a4f9c9bd-b27f-4a62-bae2-dcc5b44b43a6",
+      "name": "College Email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "i-re",
+              "name": "recipientEmail",
+              "type": "string",
+              "value": "={{ $json['Email'] }}"
+            },
+            {
+              "id": "i-rn",
+              "name": "recipientName",
+              "type": "string",
+              "value": "={{ $json['Name'] }}"
+            },
+            {
+              "id": "i-pt",
+              "name": "partnerType",
+              "type": "string",
+              "value": "Influencer"
+            },
+            {
+              "id": "i-sub",
+              "name": "emailSubject",
+              "type": "string",
+              "value": "=Collab opportunity — [YOUR COMPANY] x {{ $json['Name'].split(' ')[0] }} 🚀"
+            },
+            {
+              "id": "i-bod",
+              "name": "emailBody",
+              "type": "string",
+              "value": "=<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;line-height:1.6\"><p>Hi {{ $json['Name'].split(' ')[0] }},</p><p>Huge fan of your content — we think <strong>[YOUR COMPANY]</strong> and you would be a perfect match!</p><p>Here is what a partnership with <strong>[YOUR COMPANY]</strong> looks like:</p><ul style=\"padding-left:20px\"><li style=\"margin-bottom:6px\">💰 Competitive flat fee + performance-based revenue share</li><li style=\"margin-bottom:6px\">🎁 Free lifetime access to [YOUR PRODUCT] for you and your audience</li><li style=\"margin-bottom:6px\">📸 Full creative freedom — no rigid scripts, just authentic content</li><li style=\"margin-bottom:6px\">📣 Cross-promotion to our audience of [X]K followers</li></ul><p>Our creator partners see strong engagement and have driven <strong>thousands of signups</strong> with a single post.</p><p>I'd love to jump on a quick 20-minute call to explore this — no pitch, just a genuine conversation.</p><p style=\"margin-top:24px\"><a href=\"https://calendly.com/REPLACE_WITH_CALENDAR_LINK\" style=\"background:#7C3AED;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;font-weight:bold\">📅 Let's Talk Collab</a></p><p style=\"margin-top:24px\">Looking forward to it,<br><strong>[YOUR NAME]</strong><br>[YOUR TITLE] · [YOUR COMPANY]<br>[YOUR PHONE] · [YOUR EMAIL]</p><hr style=\"border:none;border-top:1px solid #eee;margin:28px 0\"><p style=\"font-size:11px;color:#999\">You received this because you filled out our partner interest form.<br><a href=\"mailto:[YOUR EMAIL]?subject=Unsubscribe\" style=\"color:#999\">Unsubscribe</a></p></body></html>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "735c37b4-d911-4c96-9dc1-aa2ef1a21ed0",
+      "name": "Influencer Email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b-re",
+              "name": "recipientEmail",
+              "type": "string",
+              "value": "={{ $json['Email'] }}"
+            },
+            {
+              "id": "b-rn",
+              "name": "recipientName",
+              "type": "string",
+              "value": "={{ $json['Name'] }}"
+            },
+            {
+              "id": "b-pt",
+              "name": "partnerType",
+              "type": "string",
+              "value": "Brand"
+            },
+            {
+              "id": "b-sub",
+              "name": "emailSubject",
+              "type": "string",
+              "value": "=Brand partnership with [YOUR COMPANY] — let's grow together, {{ $json['Name'].split(' ')[0] }}"
+            },
+            {
+              "id": "b-bod",
+              "name": "emailBody",
+              "type": "string",
+              "value": "=<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;line-height:1.6\"><p>Hi {{ $json['Name'].split(' ')[0] }},</p><p>We'd love to explore a brand partnership between <strong>{{ $json['Company'] || 'your team' }}</strong> and <strong>{{ $json.Name }}</strong>!</p><p>Here is what a partnership with <strong>[YOUR COMPANY]</strong> looks like:</p><ul style=\"padding-left:20px\"><li style=\"margin-bottom:6px\">📣 Co-branded campaigns reaching both our audiences</li><li style=\"margin-bottom:6px\">🤝 Joint product bundles and exclusive offers</li><li style=\"margin-bottom:6px\">📊 Shared performance dashboards and transparent reporting</li><li style=\"margin-bottom:6px\">🚀 Co-sponsored events, webinars, and activations</li></ul><p>Our brand partners typically see a <strong>2–4x uplift</strong> in qualified leads within the first campaign.</p><p>I'd love to jump on a quick 20-minute call to explore this — no pitch, just a genuine conversation.</p><p style=\"margin-top:24px\"><a href=\"https://calendly.com/REPLACE_WITH_CALENDAR_LINK\" style=\"background:#059669;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;font-weight:bold\">📅 Explore the Partnership</a></p><p style=\"margin-top:24px\">Looking forward to it,<br><strong>[YOUR NAME]</strong><br>[YOUR TITLE] · [YOUR COMPANY]<br>[YOUR PHONE] · [YOUR EMAIL]</p><hr style=\"border:none;border-top:1px solid #eee;margin:28px 0\"><p style=\"font-size:11px;color:#999\">You received this because you filled out our partner interest form.<br><a href=\"mailto:[YOUR EMAIL]?subject=Unsubscribe\" style=\"color:#999\">Unsubscribe</a></p></body></html>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "94b96d2d-04a1-41cd-b34c-d3fcc55443ea",
+      "name": "Brand Email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "o-re",
+              "name": "recipientEmail",
+              "type": "string",
+              "value": "={{ $json['Email'] }}"
+            },
+            {
+              "id": "o-rn",
+              "name": "recipientName",
+              "type": "string",
+              "value": "={{ $json['Name'] }}"
+            },
+            {
+              "id": "o-pt",
+              "name": "partnerType",
+              "type": "string",
+              "value": "={{ $json['partner_type'] || 'Other' }}"
+            },
+            {
+              "id": "o-sub",
+              "name": "emailSubject",
+              "type": "string",
+              "value": "=Thanks for reaching out, {{ $json['Name'].split(' ')[0] }} — let's connect"
+            },
+            {
+              "id": "o-bod",
+              "name": "emailBody",
+              "type": "string",
+              "value": "=<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;line-height:1.6\"><p>Hi {{ $json['Name'].split(' ')[0] }},</p><p>Thanks for filling out our form — great to hear from <strong>{{ $json['Company'] || 'your team' }}</strong>!</p><p>Here is what a partnership with <strong>[YOUR COMPANY]</strong> looks like:</p><ul style=\"padding-left:20px\"><li style=\"margin-bottom:6px\">🤝 Flexible partnership structures tailored to your goals</li><li style=\"margin-bottom:6px\">🚀 Fast onboarding and a dedicated point of contact</li><li style=\"margin-bottom:6px\">📈 Mutual growth and cross-promotion opportunities</li></ul><p>We are always open to exploring creative ways to work together.</p><p>I'd love to jump on a quick 20-minute call to explore this — no pitch, just a genuine conversation.</p><p style=\"margin-top:24px\"><a href=\"https://calendly.com/REPLACE_WITH_CALENDAR_LINK\" style=\"background:#374151;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;font-weight:bold\">📅 Book a Quick Call</a></p><p style=\"margin-top:24px\">Looking forward to it,<br><strong>[YOUR NAME]</strong><br>[YOUR TITLE] · [YOUR COMPANY]<br>[YOUR PHONE] · [YOUR EMAIL]</p><hr style=\"border:none;border-top:1px solid #eee;margin:28px 0\"><p style=\"font-size:11px;color:#999\">You received this because you filled out our partner interest form.<br><a href=\"mailto:[YOUR EMAIL]?subject=Unsubscribe\" style=\"color:#999\">Unsubscribe</a></p></body></html>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e3dce449-13dc-4df8-854a-8168f209ebad",
+      "name": "Other Email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o",
+          "mode": "list",
+          "cachedResultName": "Test Response"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 860761689,
+          "mode": "list",
+          "cachedResultName": "Tracking"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email": "={{ $('Skip If Already In Sequence').item.json['Email'] }}",
+            "Name": "={{ $('Skip If Already In Sequence').item.json.Name }}",
+            "partner_type": "={{ $('Skip If Already In Sequence').item.json['partner_type'] }}",
+            "status": "sent",
+            "sent_date": "={{ $now.toFormat(\"yyyy/MM/dd\") }}",
+            "email_type": "={{ $('Skip If Already In Sequence').item.json.email_type }}",
+            "follow_up_date": "={{ $now.plus({days: 5}).toISODate() }}",
+            "row_number": "={{ $('Skip If Already In Sequence').item.json.row_number }}",
+            "thread_id": "={{ $json.code }}",
+            "message_id": "={{ $json.code }}",
+            "original_subject": "={{ $('Wait').item.json.emailSubject }}"
+          },
+          "matchingColumns": [
+            "Email"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "partner_type",
+              "displayName": "partner_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sent_date",
+              "displayName": "sent_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_type",
+              "displayName": "email_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "follow_up_date",
+              "displayName": "follow_up_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "thread_id",
+              "displayName": "thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "original_subject",
+              "displayName": "original_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "480ae738-7820-4a70-9a12-965e52a311b9",
+      "name": "Add to Tracking Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        464
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KXw7mOPSGBu1qOjG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        272
+      ],
+      "id": "62359888-bf8f-4715-8260-d450af20be8b",
+      "name": "Wait",
+      "webhookId": "cfdb58c9-f39d-4583-aeae-7c6b5a9cf6ba"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o",
+          "mode": "list",
+          "cachedResultName": "Test Response",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 860761689,
+          "mode": "list",
+          "cachedResultName": "Tracking",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o/edit#gid=860761689"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1568,
+        464
+      ],
+      "id": "b1798d31-2b66-4e40-b9e9-8fa400f82971",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KXw7mOPSGBu1qOjG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1792,
+        464
+      ],
+      "id": "e3edece6-3c61-4d7f-af8a-06e0835cc040",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "mailagent": "555046c28339d27e",
+        "fromaddress": {
+          "address": "noreply@thinksage.in",
+          "name": "Think Sage"
+        },
+        "toaddress": "={{ $json.recipientEmail }}",
+        "subject": "={{ $json.emailSubject }}",
+        "htmlbody": "={{ $json.emailBody }}",
+        "attachment": {}
+      },
+      "id": "a3e81dc6-1533-41a7-a2d9-e0733d77bf58",
+      "name": "Initial Email",
+      "type": "n8n-nodes-zohozeptomail.zohoZeptomail",
+      "typeVersion": 1,
+      "position": [
+        448,
+        272
+      ],
+      "credentials": {
+        "zohoZeptomailOAuth2Api": {
+          "id": "HePfA7nNDatRJLsa",
+          "name": "Zoho ZeptoMail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Cold Email – Part 1: Initial Email\n\nReads leads from a Google Sheet, skips anyone already in the sequence, then sends a personalised cold email based on partner type. Runs on a schedule.\n\n\n## 📄 [Google Sheet](https://docs.google.com/spreadsheets/d/162MmWKtj8bfhY4bf48Ld-o6Vbwba1V0qqi14vTDe49o/edit?gid=860761689#gid=860761689)\n\n---\n## 📽️[Workflow Walkthorugh](https://drive.google.com/file/d/1ZRmonCPyrW8Jw1Q8Be8_SLa4pY9b7IZs/view?usp=sharing)\n\n---\n## How It Works\n1. Pulls leads from the sheet → removes duplicates → validates Name + Email\n2. For each lead, checks Tracking sheet — skips if status is `sent`, `followup_1`, `completed`, `replied`, or `unsubscribed`\n3. Routes by `partner_type` → builds matching email\n4. Sends via ZeptoMail → logs to Tracking sheet → moves to next lead\n\n## Sheet Setup\n### Leads Sheet (Tab: *Test Response*)\n**You fill:** `Name`, `Email`, `partner_type` (`College` / `Influencer` / `Brand` / anything else)\n\n### Tracking Sheet (Tab: *Tracking*)\n**Auto-filled:** `Email`, `status`\n\n## Setup\n1. Import workflow into n8n\n2. Connect **Google Sheets** + **ZeptoMail** credentials\n3. Point both sheet nodes to your sheet\n4. Activate\n\n## Customise\nReplace these placeholders in each email node:\n- `[YOUR COMPANY]`, `[YOUR NAME]`, `[YOUR TITLE]`, `[YOUR PHONE]`, `[YOUR EMAIL]`\n- `https://calendly.com/REPLACE_WITH_CALENDAR_LINK`\n- Schedule time → edit Schedule Trigger node\n\n",
+        "height": 800,
+        "width": 864
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1776,
+        -368
+      ],
+      "typeVersion": 1,
+      "id": "b1b36389-94b2-458d-b891-fee4a9684304",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Remove Duplicate Emails": {
+      "main": [
+        [
+          {
+            "node": "Validate Email and Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Email and Name": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Read Tracking Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Tracking Sheet": {
+      "main": [
+        [
+          {
+            "node": "Skip If Already In Sequence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip If Already In Sequence": {
+      "main": [
+        [
+          {
+            "node": "Route by Partner Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Partner Type": {
+      "main": [
+        [
+          {
+            "node": "College Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Influencer Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Brand Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Other Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "College Email": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Influencer Email": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brand Email": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Other Email": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Tracking Sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Initial Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicate Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initial Email": {
+      "main": [
+        [
+          {
+            "node": "Add to Tracking Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "saveManualExecutions": false,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "81793834-8068-4f68-a821-bbda2531e8e3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cb0154973bcd92f7ef5547aed2efb328b5df5bb198f16b309c8561141355ab93"
+  },
+  "id": "N3J7SAizDLv2q5Bq",
+  "tags": []
+}

@@ -1,0 +1,403 @@
+{
+  "name": "Telegram Voice to HeyGen Video (FIXED)",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "==JSON.stringify({\n  video_inputs: [{\n    character: {\n      type: \"avatar\",\n      avatar_id: \"Aditya_public_5\"\n    },\n    voice: {\n      type: \"text\",\n      input_text: $json.content.parts[0].text,\n      voice_id: \"acb50496eda54ff68474e7879f59276f\"\n    }\n  }],\n  dimension: {\n    width: 720,\n    height: 1280\n  }\n})",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -896,
+        128
+      ],
+      "id": "077d161c-84be-4d4f-819e-02d108a36faa",
+      "name": "Generate Video1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://upload.heygen.com/v1/asset",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1568,
+        128
+      ],
+      "id": "b4b7b0d8-c1c5-4495-9657-f71bbfc47bc9",
+      "name": "Upload Audio to HeyGen1"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.data.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1344,
+        128
+      ],
+      "id": "4cd40dd0-08bf-4bcf-9ad7-aa64ed2d2b89",
+      "name": "Download Audio1"
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "file": "={{ $json.data.video_url }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1e3f842a-f581-4f2b-a314-e55bf0a6257e",
+      "name": "Send Video1",
+      "webhookId": "957a8398-efca-44e1-ba85-cb380f5cae3a"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "⚠️ Please send a voice message!",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        -1792,
+        320
+      ],
+      "id": "38917ffc-a63f-4f3e-99ba-f2696b677bbc",
+      "name": "Send Error1",
+      "webhookId": "275dec65-ea2d-43fa-88de-c64f70dd0fad"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2240,
+        224
+      ],
+      "id": "224492c9-e952-431f-9643-6e34e3f343a9",
+      "name": "Telegram Trigger",
+      "webhookId": "54831863-0505-44e9-b824-bb72e4c87fcb"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.message.audio.file_id }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -2016,
+        224
+      ],
+      "id": "7832259e-e5fa-481e-8811-75001f729e82",
+      "name": "Has Voice Message?"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.audio.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        -1792,
+        128
+      ],
+      "id": "2e7e20d3-7982-4374-9f5f-2dc64e7d4993",
+      "name": "Get Voice File",
+      "webhookId": "2a3a538f-caa3-4b6a-ab6d-8ef21ada5fc9"
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -672,
+        128
+      ],
+      "id": "f8d60056-f89e-4a1b-a999-92c03e4c185e",
+      "name": "Wait",
+      "webhookId": "b84a5af1-4cbb-4326-ae3b-26cdd9fee2ab"
+    },
+    {
+      "parameters": {
+        "url": "https://api.heygen.com/v1/video_status.get",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "video_id",
+              "value": "={{ $('Generate Video1').item.json.data.video_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -448,
+        128
+      ],
+      "id": "ff20e48b-f1b0-4f68-b86d-d1c9fe2c318a",
+      "name": "Video Status"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.data.status }}",
+              "value2": "completed"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        48
+      ],
+      "id": "19daaf64-5204-4ad2-b199-5d184cca2576",
+      "name": "Is Complete?"
+    },
+    {
+      "parameters": {
+        "amount": 90
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        224
+      ],
+      "id": "7be94760-b319-470d-8678-fadeefc72646",
+      "name": "Wait Before Retry",
+      "webhookId": "c8b62133-7c38-4cf7-8dcc-c843aea634e3"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-lite-001",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-lite-001"
+        },
+        "audioUrls": "={{ $json.data.url }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -1120,
+        128
+      ],
+      "id": "d929f3cc-f326-49d2-98bd-7a0e22fd516e",
+      "name": "Transcribe a recording1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Generate Video1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Audio to HeyGen1": {
+      "main": [
+        [
+          {
+            "node": "Download Audio1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Audio1": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Has Voice Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Voice Message?": {
+      "main": [
+        [
+          {
+            "node": "Get Voice File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Voice File": {
+      "main": [
+        [
+          {
+            "node": "Upload Audio to HeyGen1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video Status": {
+      "main": [
+        [
+          {
+            "node": "Is Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Complete?": {
+      "main": [
+        [
+          {
+            "node": "Send Video1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Before Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before Retry": {
+      "main": [
+        [
+          {
+            "node": "Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording1": {
+      "main": [
+        [
+          {
+            "node": "Generate Video1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "cc4455ac-cee8-4c9b-97af-2a51057fc8d0",
+  "meta": {
+    "instanceId": "cb0154973bcd92f7ef5547aed2efb328b5df5bb198f16b309c8561141355ab93"
+  },
+  "id": "eyxxgSBXe556a4M0",
+  "tags": []
+}

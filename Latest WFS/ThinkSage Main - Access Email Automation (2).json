@@ -1,0 +1,135 @@
+{
+  "name": "ThinkSage Main - Access Email Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "email-form-submit",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b31dae22-2078-4018-886a-4d541476b3b6",
+      "name": "Webflow Form Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1152,
+        64
+      ],
+      "webhookId": "08c6e377-2a46-4fae-ae43-80c5092ef64b"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "OK",
+        "options": {}
+      },
+      "id": "a6bf1816-061d-4297-8010-0ca25d1568a7",
+      "name": "Respond to Webflow",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -928,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://connect.mailerlite.com/api/subscribers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI0IiwianRpIjoiN2ZiMzllYjMwMDQ3ZDkzNzM5OGE5NWZmMDFmM2U1YjVmM2NhYjk5YTQ0ZDdiMGM0NmZiNzY4NWVjODE5MGQzMjE5MDA3Y2ZlNjZiMTc1MTciLCJpYXQiOjE3NzQ5NDYxNjQuODMzNDI3LCJuYmYiOjE3NzQ5NDYxNjQuODMzNDI5LCJleHAiOjQ5MzA2MTk3NjQuODI4MDE3LCJzdWIiOiIzMjk1OTIiLCJzY29wZXMiOltdfQ.L-5P9hPwFlqMfrm5t44bkwVOAYWNNINNjDHMmUi4s5vpbJC5kxcoedk1cov8s6GpxhG1FrfQVEebdJxWKdBDOwn6Lb4wuKSuHtCtrlrM_oRaSXCJAQqm4j8UqDBoQuGm2UwVV9w8Ca2dMsyT-bF0q_aYk_OSU1u3Qfx_1ZrjkEiqwNZ2PuaenhAsjAX-VrnUE05BvRd9h48p-jAg2I_NRRNahMg2GTrGrkXfd2LkajIA7ZOyftWy-0m9Y6VS1ulaM6Cy-AmPlMsbNSfK_3oQvPoD-tx0GDmrXUY_Vjg0W7NJ4P2sg6kpdRzX_ZutsO5s6ejJwj0FxemZLxLkECekm3FVU8zjAb4RwvmT2W2JqPxmYfIQV3uigHy0sEUZnfEl6e8q2ZD-vjN2E2lghonAEbvvAE83ZPirdegoXKCn1_u5sFuYZDST6STykPOs8ltCtfOdd0f_vhAoDGrbNKKa5audU23xc7L96hJcHGkitWcXBwxVZTq5JUK2FCtL5lPCgj3sYxLJz8bfdbwFykJ2z780JfgiSbKrUBG6AZvuNoqqerkWsf07XZSRx5Wkr0sF7UwH7dXhWLN6ohWJ1X6o3pY1NyE1T3ZvLCY7azagRIbMXgQzSoMu16I5cGxXhtK1r7wNzXJB9TKguJvOQcUbenmBgWsbNg9WKzCBJMjsQbw"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"email\": \"{{ $('Webflow Form Webhook').item.json.body.payload.data.Email }}\",\n  \"groups\": [\"183444910611892150\"]\n}",
+        "options": {}
+      },
+      "id": "6083a184-cdc9-46d8-a018-818653d264dd",
+      "name": "Add to MailerLite",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -928,
+        64
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webflow Form Webhook').item.json.body.payload.data.Email }}",
+        "subject": "Access Your AI Resume Builder + Free Credits",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n  <title>Access Your AI Resume Builder</title>\n</head>\n<body style=\"margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;\">\n\n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #f4f4f4; padding: 40px 0;\">\n    <tr>\n      <td align=\"center\">\n\n        <!-- Email Card -->\n        <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08);\">\n\n          <!-- Header -->\n          <tr>\n            <td style=\"background-color: #111111; padding: 28px 40px;\">\n              <p style=\"margin: 0; font-size: 22px; font-weight: bold; color: #f5c518; letter-spacing: 0.5px;\">Think Sage</p>\n            </td>\n          </tr>\n\n          <!-- Body -->\n          <tr>\n            <td style=\"padding: 36px 40px; color: #111111; font-size: 15px; line-height: 1.7;\">\n\n              <p style=\"margin: 0 0 16px;\">Hi there,</p>\n\n              <p style=\"margin: 0 0 16px;\">Thank you for visiting the Think Sage website and sharing your details with us.</p>\n\n              <p style=\"margin: 0 0 24px;\">As promised, here is your access to the AI Resume Builder, along with your free credits to get started:</p>\n\n              <!-- CTA Button -->\n              <table cellpadding=\"0\" cellspacing=\"0\" style=\"margin: 0 0 28px;\">\n                <tr>\n                  <td style=\"background-color: #f5c518; border-radius: 6px;\">\n                    <a href=\"https://meracareer.io/login\"\n                      style=\"display: inline-block; padding: 14px 28px; color: #111111; font-weight: bold; font-size: 16px; text-decoration: none;\">\n                      👉 Access Here: meracareer.io/login\n                    </a>\n                  </td>\n                </tr>\n              </table>\n\n              <p style=\"margin: 0 0 12px;\">You can use these credits to:</p>\n              <ul style=\"margin: 0 0 24px; padding-left: 20px; line-height: 2;\">\n                <li>Create a professional resume from scratch</li>\n                <li>Improve your existing resume</li>\n                <li>Generate stronger bullet points and summaries</li>\n                <li>Tailor your resume for specific roles</li>\n              </ul>\n\n              <p style=\"margin: 0 0 16px;\">We recommend getting started right away and exploring the features to make the most of your credits.</p>\n\n              <p style=\"margin: 0 0 16px;\">\n                If you need any help while using the platform, feel free to reach us at\n                <a href=\"mailto:hello@meracareer.io\" style=\"color: #f5c518; text-decoration: none; font-weight: bold;\">hello@meracareer.io</a>\n                — we're here to support you.\n              </p>\n\n              <p style=\"margin: 0 0 24px;\">Looking forward to helping you build a stronger profile.</p>\n\n              <p style=\"margin: 0;\">\n                Regards,<br/>\n                <strong>Vijay and Prashant</strong><br/>\n                <span style=\"color: #888888; font-size: 13px;\">Think Sage</span>\n              </p>\n\n            </td>\n          </tr>\n\n          <!-- Footer -->\n          <tr>\n            <td style=\"background-color: #f9f9f9; padding: 20px 40px; border-top: 1px solid #eeeeee;\">\n              <p style=\"margin: 0; font-size: 12px; color: #aaaaaa; text-align: center;\">\n                © 2026 Think Sage · <a href=\"https://thinksage.in\" style=\"color: #aaaaaa; text-decoration: none;\">thinksage.in</a>\n              </p>\n            </td>\n          </tr>\n\n        </table>\n        <!-- End Email Card -->\n\n      </td>\n    </tr>\n  </table>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -928,
+        256
+      ],
+      "id": "9b9a24e6-0858-467f-ad7f-941299f184a7",
+      "name": "Send Access Email",
+      "webhookId": "023381d0-62f3-4783-aa13-83fcb37fd42d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2Xa7GsVus0kv22N3",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webflow Form Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webflow",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Add to MailerLite",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Access Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "saveManualExecutions": false,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "e49567eb-c89c-45dd-8b00-a2a6c9986a79",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cb0154973bcd92f7ef5547aed2efb328b5df5bb198f16b309c8561141355ab93"
+  },
+  "id": "42q5acFJTNiy1knf",
+  "tags": []
+}
