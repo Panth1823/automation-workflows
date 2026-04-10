@@ -8,12 +8,12 @@
         "width": 500,
         "color": 2
       },
-      "id": "cb6d4bfe-78de-4c4d-a47f-f71888d0e3ad",
+      "id": "bae2c104-f3bf-47c7-8252-d25b48c137a7",
       "name": "Main Sticky",
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -896,
-        464
+        -528,
+        208
       ],
       "typeVersion": 1
     },
@@ -28,15 +28,15 @@
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.1,
       "position": [
-        -320,
-        624
+        48,
+        368
       ],
-      "id": "225666dc-dc9c-44e6-a8b2-4899e0dbf5ba",
-      "webhookId": "",
+      "id": "ccc6b9db-e6e4-4065-bf53-c5ff05ecdb6b",
       "alwaysOutputData": true,
       "credentials": {
         "telegramApi": {
-          "id": ""
+          "id": "1",
+          "name": "Telegram API"
         }
       }
     },
@@ -51,16 +51,16 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        96,
-        544
+        464,
+        288
       ],
-      "id": "cdfde1b3-add6-4e82-9c90-2dbf0a03b9ad",
+      "id": "8dfa2cc3-9245-471a-9e73-3cec307ee4f4",
       "name": "Get a file",
-      "webhookId": "",
       "alwaysOutputData": true,
       "credentials": {
         "telegramApi": {
-          "id": ""
+          "id": "1",
+          "name": "Telegram API"
         }
       }
     },
@@ -72,27 +72,28 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        656,
-        544
+        1024,
+        288
       ],
-      "id": "a7862d06-b257-450b-a5db-280ad47f780a"
+      "id": "7f5f807f-3ff4-439c-b609-dc8b8cbcc751"
     },
     {
       "parameters": {
-        "options": {},
-        "modelName": "models/gemini-2.5-flash-lite"
+        "modelName": "models/gemini-3.1-flash-lite-preview",
+        "options": {}
       },
       "name": "Google Gemini Chat Model1",
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        864,
-        752
+        1232,
+        496
       ],
-      "id": "0fc72f9a-ee41-4833-987a-e54463416616",
+      "id": "f34b2f4a-f761-4cc5-96cb-270e703ffb21",
       "credentials": {
         "googlePalmApi": {
-          "id": ""
+          "id": "1",
+          "name": "Google Gemini API"
         }
       }
     },
@@ -104,10 +105,10 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        1008,
-        752
+        1376,
+        496
       ],
-      "id": "bcaa6f7f-d4e8-4d33-a8ba-30be4d13d69c"
+      "id": "c03afbf3-5af2-4a37-9f75-e8567e341a07"
     },
     {
       "parameters": {
@@ -124,29 +125,29 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -128,
-        624
+        240,
+        368
       ],
-      "id": "16e48bbb-37d1-4409-85a9-07802e30f94e"
+      "id": "b6a23671-a846-4995-9d9a-e2f58d019dda"
     },
     {
       "parameters": {
         "chatId": "={{ $json.message.from.id }}",
-        "text": "=⚠️ **Text Not Accepted**\n\nn8n workflows are too large for Telegram text messages (limit: 4096 chars).\n\n👉 Please **drag and drop the .json file** instead.",
+        "text": "=**Text Not Accepted**\n\nn8n workflows are too large for Telegram text messages (limit: 4096 chars).\n\nPlease **drag and drop the .json file** instead.",
         "additionalFields": {}
       },
       "name": "Send a text message",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        96,
-        720
+        464,
+        464
       ],
-      "id": "3484e720-0ee2-43ed-921b-c10a2d0c37ba",
-      "webhookId": "",
+      "id": "6eb4d39a-1280-4ffb-8d84-63c2e8dcb6cb",
       "credentials": {
         "telegramApi": {
-          "id": ""
+          "id": "1",
+          "name": "Telegram API"
         }
       }
     },
@@ -159,26 +160,26 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1.1,
       "position": [
-        432,
-        544
+        800,
+        288
       ],
-      "id": "9491f5e2-e0b5-4de8-a0e8-bafb82a06160",
+      "id": "0d974f45-a7e8-4c09-91b9-27843f39ae37",
       "alwaysOutputData": true
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are an expert n8n Template Engineer. Analyze the workflow JSON below and generate documentation per n8n Template Guidelines.\n\n### INPUT:\n{{ $json.workflowString }}\nCommunity nodes present: {{ $json.analysis.hasCommunityNodes }}\nCommunity node types: {{ $json.analysis.communityNodeTypes }}\n\n### RULES:\n1. Return raw JSON only — no Markdown code blocks, no HTML.\n2. Clear, professional English.\n3. Output must match the schema exactly.\n\n### MAIN STICKY (color 2 = yellow, 500×600px) — use this structure:\n## [Action Verb + Thing + Context]\n[1-sentence value proposition]\n\n### How it works\n[Numbered steps, max 10 words each]\n\n### Setup\n[Numbered checklist of credentials and config]\n[If hasCommunityNodes is true, add final item: \"Install required community nodes (see Important section).\"]\n\n### Customization\n[1 tip. If user-configurable values exist (IDs, emails, endpoints), add: \"Consolidate user-specific values in a Set node at the workflow start for easy configuration.\"]\n\n### Important\n[Only include if hasCommunityNodes is true: \"⚠️ This workflow requires a self-hosted n8n instance. Community nodes used: [list communityNodeTypes]\"]\n\n### SECTION STICKIES (color 7 = white, only if 5+ nodes):\nShort ## Heading per logical group (e.g. ## 1. Trigger, ## 2. Processing, ## 3. Output).\n\n### METADATA:\n- titleSuggestions: 3 SEO-friendly titles\n- templateDescription: ≤3 sentences / 60 words — Why and Result only, no steps\n- tags: 3–5 relevant tags\n- credentialsRemoved: false only if hardcoded secrets remain\n\n### OUTPUT SCHEMA (return ONLY this JSON object):\n{\"mainSticky\":{\"parameters\":{\"content\":\"string\",\"height\":600,\"width\":500,\"color\":2},\"name\":\"Main Sticky\",\"type\":\"n8n-nodes-base.stickyNote\",\"typeVersion\":1},\"sectionStickies\":[{\"parameters\":{\"content\":\"string\",\"height\":300,\"width\":600,\"color\":7},\"name\":\"string\",\"type\":\"n8n-nodes-base.stickyNote\",\"typeVersion\":1}],\"titleSuggestions\":[\"string\",\"string\",\"string\"],\"templateDescription\":\"string\",\"tags\":[\"string\"],\"validationResults\":{\"titleFormat\":true,\"descriptionLength\":true,\"hasStickyNotes\":true,\"credentialsRemoved\":true}}",
+        "text": "=You are an expert n8n Template Engineer. Analyze the workflow JSON below and generate documentation per n8n Template Guidelines.\n\n### INPUT:\n{{ $json.workflowString }}\nCommunity nodes present: {{ $json.analysis.hasCommunityNodes }}\nCommunity node types: {{ $json.analysis.communityNodeTypes }}\n\n### RULES:\n1. Return raw JSON only — no Markdown code blocks, no HTML.\n2. Clear, professional English.\n3. Output must match the schema exactly.\n\n### MAIN STICKY (color 2 = yellow, 500×600px) — use this structure:\n## [Action Verb + Thing + Context]\n[1-sentence value proposition]\n\n### How it works\n[Numbered steps, max 10 words each]\n\n### Setup\n[Numbered checklist of credentials and config]\n[If hasCommunityNodes is true, add final item: \"Install required community nodes (see Important section).\"]\n\n### Customization\n[1 tip. If user-configurable values exist (IDs, emails, endpoints), add: \"Consolidate user-specific values in a Set node at the workflow start for easy configuration.\"]\n\n### Important\n[Only include if hasCommunityNodes is true: \"Important: This workflow requires a self-hosted n8n instance. Community nodes used: [list communityNodeTypes]\"]\n\n### SECTION STICKIES (color 7 = white, only if 5+ nodes):\nShort ## Heading per logical group (e.g. ## 1. Trigger, ## 2. Processing, ## 3. Output).\n\n### METADATA:\n- titleSuggestions: 3 SEO-friendly titles\n- templateDescription: ≤3 sentences / 60 words — Why and Result only, no steps\n- tags: 3–5 relevant tags\n- credentialsRemoved: false only if hardcoded secrets remain\n\n### OUTPUT SCHEMA (return ONLY this JSON object):\n{\"mainSticky\":{\"parameters\":{\"content\":\"string\",\"height\":600,\"width\":500,\"color\":2},\"name\":\"Main Sticky\",\"type\":\"n8n-nodes-base.stickyNote\",\"typeVersion\":1},\"sectionStickies\":[{\"parameters\":{\"content\":\"string\",\"height\":300,\"width\":600,\"color\":7},\"name\":\"string\",\"type\":\"n8n-nodes-base.stickyNote\",\"typeVersion\":1}],\"titleSuggestions\":[\"string\",\"string\",\"string\"],\"templateDescription\":\"string\",\"tags\":[\"string\"],\"validationResults\":{\"titleFormat\":true,\"descriptionLength\":true,\"hasStickyNotes\":true,\"credentialsRemoved\":true}}",
         "hasOutputParser": true
       },
       "name": "AI Template Generator",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.4,
       "position": [
-        864,
-        544
+        1232,
+        288
       ],
-      "id": "825a3137-6e31-4eac-949a-4ef68f2cbb25"
+      "id": "0703748b-14ed-430d-9077-2a5a38b9b486"
     },
     {
       "parameters": {
@@ -188,10 +189,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1296,
-        544
+        1664,
+        288
       ],
-      "id": "87228190-bc13-4218-9fb8-82cc03331c39",
+      "id": "b5975bc6-b8e9-4cf0-b0a4-feb80b519672",
       "alwaysOutputData": true
     },
     {
@@ -200,21 +201,21 @@
         "chatId": "={{ $('Assemble Final Template').item.json.triggerChatId }}",
         "binaryData": true,
         "additionalFields": {
-          "caption": "🎉 Here is your standardized template:"
+            "caption": "Here is your standardized template:"
         }
       },
       "name": "Send Template File1",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1488,
-        544
+        1856,
+        288
       ],
-      "id": "a89af7bd-9e19-4cbb-9ab2-ac6c784f1342",
-      "webhookId": "",
+      "id": "6bb63e8d-e9dc-4e1c-948f-3fa2fc298bd9",
       "credentials": {
         "telegramApi": {
-          "id": ""
+          "id": "1",
+          "name": "Telegram API"
         }
       }
     },
@@ -228,14 +229,14 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1680,
-        544
+        2048,
+        288
       ],
-      "id": "fcf34089-efaf-45b7-a45d-77574d03d384",
-      "webhookId": "",
+      "id": "f79244f9-885a-4e5a-817b-07ad1713423f",
       "credentials": {
         "telegramApi": {
-          "id": ""
+          "id": "1",
+          "name": "Telegram API"
         }
       }
     },
@@ -249,14 +250,14 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1872,
-        544
+        2240,
+        288
       ],
-      "id": "bd160519-eaf9-4609-824e-9d540fa5a2c1",
-      "webhookId": "",
+      "id": "7a7dac6d-a356-4c79-8e2e-d43efe50ef28",
       "credentials": {
         "telegramApi": {
-          "id": ""
+          "id": "1",
+          "name": "Telegram API"
         }
       }
     },
@@ -267,12 +268,12 @@
         "width": 656,
         "color": 7
       },
-      "id": "38582e65-27d8-4a7c-8e14-04d1dcbb69d9",
+      "id": "4057b8c1-5890-434f-aa13-a9b84e10ff1a",
       "name": "Input & Validation",
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -352,
-        464
+        16,
+        208
       ],
       "typeVersion": 1
     },
@@ -283,12 +284,12 @@
         "width": 832,
         "color": 7
       },
-      "id": "7707bb2f-c169-4bab-8f4b-80d1b01351d4",
+      "id": "5eed78d2-18d2-45eb-b154-3cdc27d2b242",
       "name": "AI Documentation Generation",
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        352,
-        464
+        720,
+        208
       ],
       "typeVersion": 1
     },
@@ -299,12 +300,12 @@
         "width": 864,
         "color": 7
       },
-      "id": "02e90837-4751-4eae-a2d1-6c581f808ad6",
+      "id": "9056260f-eae9-4f52-81aa-b77ac586191a",
       "name": "Template Assembly & Delivery",
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        1232,
-        464
+        1600,
+        208
       ],
       "typeVersion": 1
     }
@@ -441,7 +442,9 @@
   },
   "active": false,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
   },
   "tags": []
 }

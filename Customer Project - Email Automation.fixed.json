@@ -1,0 +1,1614 @@
+{
+  "name": "Customer Project - Email Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "REDACTED",
+      "name": "Daily Schedule Trigger",
+      "type": "REDACTED",
+      "typeVersion": 1.2,
+      "position": [
+        -1344,
+        512
+      ],
+      "notes": "Runs daily at 9:00 AM IST."
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED",
+          "mode": "list",
+          "cachedResultName": "Email Testing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Read All Customer Rows",
+      "type": "REDACTED",
+      "typeVersion": 4.4,
+      "position": [
+        -1120,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "filter-empty-email",
+              "leftValue": "={{ $json['Email'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "filter-empty-name",
+              "leftValue": "={{ $json['Customer Name'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Filter Empty Rows",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        512
+      ],
+      "notes": "Skips blank rows. Only rows with a name + email pass through."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-today",
+              "name": "today",
+              "value": "={{ $now.toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-t3-target",
+              "name": "t3_target_date",
+              "value": "={{ $now.minus({ days: 3 }).toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-t3-window",
+              "name": "t3_window_date",
+              "value": "={{ $now.minus({ days: 7 }).toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-t5-target",
+              "name": "t5_target_date",
+              "value": "={{ $now.minus({ days: 5 }).toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-t5-window",
+              "name": "t5_window_date",
+              "value": "={{ $now.minus({ days: 10 }).toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-upsell-target",
+              "name": "upsell_target_date",
+              "value": "={{ $now.minus({ days: 3 }).toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-upsell-window",
+              "name": "upsell_window_date",
+              "value": "={{ $now.minus({ days: 7 }).toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Calculate Date Variables",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -672,
+        512
+      ],
+      "notes": "FIX: t5_window_date is now 10 days (was 9) to catch boundary customers."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-t3-date-after",
+              "leftValue": "={{ $json['Date Added'] }}",
+              "rightValue": "={{ $json.t3_window_date }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            },
+            {
+              "id": "cond-t3-date-before",
+              "leftValue": "={{ $json['Date Added'] }}",
+              "rightValue": "={{ $json.t3_target_date }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "beforeOrEquals"
+              }
+            },
+            {
+              "id": "cond-t3-not-sent",
+              "leftValue": "={{ $json['T3_Email_Sent'] }}",
+              "operator": {
+                "type": "string",
+                "operation": "empty"
+              }
+            },
+            {
+              "id": "cond-t3-not-completed",
+              "leftValue": "={{ $json['Status'] }}",
+              "rightValue": "Completed",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "cond-t3-not-alldone",
+              "leftValue": "={{ $json['Status'] }}",
+              "rightValue": "All Done",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Is T+3 Email Due?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Loop T+3 (1 at a time)",
+      "type": "REDACTED",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "id": "REDACTED",
+      "name": "Wait (T+3)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED",
+          "mode": "list",
+          "cachedResultName": "Email Testing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop T+3 (1 at a time)').item.json.row_number }}",
+            "T3_Email_Sent": "YES",
+            "original_subject": "={{ 'Update on Your ' + $('Loop T+3 (1 at a time)').item.json['Project Type'] + ' Project - We\\'re Making Progress!' }}",
+            "Customer Name": "={{ $('Loop T+3 (1 at a time)').item.json['Customer Name'] }}",
+            "Email": "={{ $('Loop T+3 (1 at a time)').item.json.Email }}",
+            "Project Type": "={{ $('Loop T+3 (1 at a time)').item.json['Project Type'] }}",
+            "Date Added": "={{ $('Loop T+3 (1 at a time)').item.json['Date Added'] }}",
+            "Status": "={{ $('Loop T+3 (1 at a time)').item.json.Status }}",
+            "T5_Email_Sent": "={{ $('Loop T+3 (1 at a time)').item.json.T5_Email_Sent }}",
+            "Feedback_Email_Sent": "={{ $('Loop T+3 (1 at a time)').item.json.Feedback_Email_Sent }}",
+            "Feedback_Email_Date": "={{ $('Loop T+3 (1 at a time)').item.json.Feedback_Email_Date }}",
+            "Upsell_Email_Sent": "={{ $('Loop T+3 (1 at a time)').item.json.Upsell_Email_Sent }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Project Type",
+              "displayName": "Project Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date Added",
+              "displayName": "Date Added",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "T3_Email_Sent",
+              "displayName": "T3_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "T5_Email_Sent",
+              "displayName": "T5_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Feedback_Email_Sent",
+              "displayName": "Feedback_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Feedback_Email_Date",
+              "displayName": "Feedback_Email_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Upsell_Email_Sent",
+              "displayName": "Upsell_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "original_subject",
+              "displayName": "original_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Mark T+3 Email Sent",
+      "type": "REDACTED",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-t5-date-after",
+              "leftValue": "={{ $json['Date Added'] }}",
+              "rightValue": "={{ $json.t5_window_date }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            },
+            {
+              "id": "cond-t5-date-before",
+              "leftValue": "={{ $json['Date Added'] }}",
+              "rightValue": "={{ $json.t5_target_date }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "beforeOrEquals"
+              }
+            },
+            {
+              "id": "cond-t5-not-sent",
+              "leftValue": "={{ $json['T5_Email_Sent'] }}",
+              "operator": {
+                "type": "string",
+                "operation": "empty"
+              }
+            },
+            {
+              "id": "cond-t5-not-completed",
+              "leftValue": "={{ $json['Status'] }}",
+              "rightValue": "Completed",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "cond-t5-not-alldone",
+              "leftValue": "={{ $json['Status'] }}",
+              "rightValue": "All Done",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "cond-t5-t3-sent-first",
+              "leftValue": "={{ $json['T3_Email_Sent'] }}",
+              "rightValue": "YES",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Is T+5 Email Due?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        368
+      ],
+      "notes": "FIX: Requires T3_Email_Sent=YES so T+5 never sends before or at the same time as T+3."
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Loop T+5 (1 at a time)",
+      "type": "REDACTED",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "id": "REDACTED",
+      "name": "Wait (T+5)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED",
+          "mode": "list",
+          "cachedResultName": "Email Testing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop T+5 (1 at a time)').item.json.row_number }}",
+            "T5_Email_Sent": "YES",
+            "original_subject": "={{ $('Loop T+5 (1 at a time)').item.json.original_subject }}",
+            "Customer Name": "={{ $('Loop T+5 (1 at a time)').item.json['Customer Name'] }}",
+            "Email": "={{ $('Loop T+5 (1 at a time)').item.json.Email }}",
+            "Project Type": "={{ $('Loop T+5 (1 at a time)').item.json['Project Type'] }}",
+            "Date Added": "={{ $('Loop T+5 (1 at a time)').item.json['Date Added'] }}",
+            "Status": "={{ $('Loop T+5 (1 at a time)').item.json.Status }}",
+            "T3_Email_Sent": "={{ $('Loop T+5 (1 at a time)').item.json.T3_Email_Sent }}",
+            "Feedback_Email_Sent": "={{ $('Loop T+5 (1 at a time)').item.json.Feedback_Email_Sent }}",
+            "Feedback_Email_Date": "={{ $('Loop T+5 (1 at a time)').item.json.Feedback_Email_Date }}",
+            "Upsell_Email_Sent": "={{ $('Loop T+5 (1 at a time)').item.json.Upsell_Email_Sent }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Project Type",
+              "displayName": "Project Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date Added",
+              "displayName": "Date Added",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "T3_Email_Sent",
+              "displayName": "T3_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "T5_Email_Sent",
+              "displayName": "T5_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feedback_Email_Sent",
+              "displayName": "Feedback_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Feedback_Email_Date",
+              "displayName": "Feedback_Email_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Upsell_Email_Sent",
+              "displayName": "Upsell_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "original_subject",
+              "displayName": "original_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Mark T+5 Email Sent",
+      "type": "REDACTED",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-completed",
+              "leftValue": "={{ $json['Status'] }}",
+              "rightValue": "In Progress",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "cond-not-alldone",
+              "leftValue": "={{ $json['Status'] }}",
+              "rightValue": "All Done",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "cond-feedback-not-sent",
+              "leftValue": "={{ $json['Feedback_Email_Sent'] }}",
+              "operator": {
+                "type": "string",
+                "operation": "empty"
+              }
+            },
+            {
+              "id": "REDACTED",
+              "leftValue": "={{ $json['T3_Email_Sent'] }}",
+              "rightValue": "YES",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "REDACTED",
+              "leftValue": "={{ $json['T5_Email_Sent'] }}",
+              "rightValue": "YES",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Is Feedback Email Due?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        656
+      ],
+      "notes": "FIX: Added All Done check so completed+upselled customers don't get feedback emails again."
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Loop Feedback (1 at a time)",
+      "type": "REDACTED",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "id": "REDACTED",
+      "name": "Wait (Feedback)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED",
+          "mode": "list",
+          "cachedResultName": "Email Testing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop Feedback (1 at a time)').item.json.row_number }}",
+            "Feedback_Email_Sent": "YES",
+            "Feedback_Email_Date": "={{ $now.toFormat('yyyy-MM-dd') }}",
+            "original_subject": "={{ $('Loop Feedback (1 at a time)').item.json.original_subject }}",
+            "Customer Name": "={{ $('Loop Feedback (1 at a time)').item.json['Customer Name'] }}",
+            "Email": "={{ $('Loop Feedback (1 at a time)').item.json.Email }}",
+            "Project Type": "={{ $('Loop Feedback (1 at a time)').item.json['Project Type'] }}",
+            "Date Added": "={{ $('Loop Feedback (1 at a time)').item.json['Date Added'] }}",
+            "Status": "={{ $('Loop Feedback (1 at a time)').item.json.Status }}",
+            "T3_Email_Sent": "={{ $('Loop Feedback (1 at a time)').item.json.T3_Email_Sent }}",
+            "T5_Email_Sent": "={{ $('Loop Feedback (1 at a time)').item.json.T5_Email_Sent }}",
+            "Upsell_Email_Sent": "={{ $('Loop Feedback (1 at a time)').item.json.Upsell_Email_Sent }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Project Type",
+              "displayName": "Project Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date Added",
+              "displayName": "Date Added",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "T3_Email_Sent",
+              "displayName": "T3_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "T5_Email_Sent",
+              "displayName": "T5_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Feedback_Email_Sent",
+              "displayName": "Feedback_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feedback_Email_Date",
+              "displayName": "Feedback_Email_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Upsell_Email_Sent",
+              "displayName": "Upsell_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "original_subject",
+              "displayName": "original_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Mark Feedback Email Sent",
+      "type": "REDACTED",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-upsell-not-inprogress",
+              "leftValue": "={{ $json['Status'] }}",
+              "rightValue": "In Progress",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "cond-upsell-not-alldone",
+              "leftValue": "={{ $json['Status'] }}",
+              "rightValue": "All Done",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "cond-upsell-feedback-done",
+              "leftValue": "={{ $json['Feedback_Email_Sent'] }}",
+              "rightValue": "YES",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-upsell-date-after",
+              "leftValue": "={{ $json['Feedback_Email_Date'] }}",
+              "rightValue": "={{ $json.upsell_window_date }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            },
+            {
+              "id": "cond-upsell-date-before",
+              "leftValue": "={{ $json['Feedback_Email_Date'] }}",
+              "rightValue": "={{ $json.upsell_target_date }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "beforeOrEquals"
+              }
+            },
+            {
+              "id": "cond-upsell-not-sent",
+              "leftValue": "={{ $json['Upsell_Email_Sent'] }}",
+              "operator": {
+                "type": "string",
+                "operation": "empty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Is Upsell Email Due?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Loop Upsell (1 at a time)",
+      "type": "REDACTED",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "id": "REDACTED",
+      "name": "Wait (Upsell)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "REDACTED",
+          "mode": "list",
+          "cachedResultName": "Email Testing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ANZZoMOCKIl-D9IFYXbjk0uEKXyezSyhN5TmhdVoktg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop Upsell (1 at a time)').item.json.row_number }}",
+            "Upsell_Email_Sent": "YES",
+            "Status": "All Done",
+            "original_subject": "={{ $('Loop Upsell (1 at a time)').item.json.original_subject }}",
+            "Customer Name": "={{ $('Loop Upsell (1 at a time)').item.json['Customer Name'] }}",
+            "Email": "={{ $('Loop Upsell (1 at a time)').item.json.Email }}",
+            "Project Type": "={{ $('Loop Upsell (1 at a time)').item.json['Project Type'] }}",
+            "Date Added": "={{ $('Loop Upsell (1 at a time)').item.json['Date Added'] }}",
+            "T3_Email_Sent": "={{ $('Loop Upsell (1 at a time)').item.json.T3_Email_Sent }}",
+            "T5_Email_Sent": "={{ $('Loop Upsell (1 at a time)').item.json.T5_Email_Sent }}",
+            "Feedback_Email_Sent": "={{ $('Loop Upsell (1 at a time)').item.json.Feedback_Email_Sent }}",
+            "Feedback_Email_Date": "={{ $('Loop Upsell (1 at a time)').item.json.Feedback_Email_Date }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Project Type",
+              "displayName": "Project Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date Added",
+              "displayName": "Date Added",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "T3_Email_Sent",
+              "displayName": "T3_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "T5_Email_Sent",
+              "displayName": "T5_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Feedback_Email_Sent",
+              "displayName": "Feedback_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Feedback_Email_Date",
+              "displayName": "Feedback_Email_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Upsell_Email_Sent",
+              "displayName": "Upsell_Email_Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "original_subject",
+              "displayName": "original_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "REDACTED",
+      "name": "Mark Upsell Email Sent",
+      "type": "REDACTED",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        944
+      ],
+      "notes": "Sets Status = All Done after upsell - stops all future checks for this customer."
+    },
+    {
+      "parameters": {
+        "mailagent": "555046c28339d27e",
+        "fromaddress": {
+          "address": "noreply@thinksage.in",
+          "name": "Think Sage"
+        },
+        "toaddress": "={{ $json['Email'] }}",
+        "subject": "={{ ' Update on Your ' + $json['Project Type'] + ' Project - We\\'re Making Progress!' }}",
+        "htmlbody": "=<html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;color:#333\">\n<h2 style=\"color:#2c5f9e\">Hi {{ $json['Customer Name'] }},</h2>\n<p>We hope you're doing well! Here's a quick update on your <strong>{{ $json['Project Type'] }}</strong> project.</p>\n<p> <strong>Day 3 Update:</strong> Our team is deep in the research and drafting phase - making sure every detail reflects your unique skills and experience.</p>\n<ul>\n<li>Reviewing your background and goals</li>\n<li>Crafting compelling, ATS-optimized content</li>\n<li>Aligning your profile with industry standards</li>\n</ul>\n<p>If you have any additional info to share (achievements, certifications etc.), feel free to reply to this email!</p>\n<p>Estimated completion is just around the corner. Stay tuned! </p>\n<br/><p>Warm regards,</p><p><strong>The [Your Company] Team</strong></p>\n<hr style=\"border:none;border-top:1px solid #eee\"/>\n<p style=\"font-size:11px;color:#999\">You're receiving this because you have an active project with us.</p>\n</body></html>",
+        "attachment": {}
+      },
+      "id": "REDACTED",
+      "name": "Send T+3 Update Email",
+      "type": "REDACTED",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mailagent": "555046c28339d27e",
+        "fromaddress": {
+          "address": "noreply@thinksage.in",
+          "name": "Think Sage"
+        },
+        "toaddress": "={{ $json['Email'] }}",
+        "subject": "={{ $json['original_subject'] }}",
+        "htmlbody": "=<html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;color:#333\">\n<h2 style=\"color:#2c5f9e\">Hi {{ $json['Customer Name'] }},</h2>\n<p>Great news - your <strong>{{ $json['Project Type'] }}</strong> project is well underway and results are taking shape!</p>\n<p> <strong>Day 5 Update:</strong> We're now in the final refinement stage - polishing the language, optimizing for recruiter attention, and tailoring everything to your goals.</p>\n<ul>\n<li> Draft content completed</li>\n<li> ATS keyword optimization done</li>\n<li> Final quality review in progress</li>\n</ul>\n<p>You'll receive the final deliverable very shortly. We can't wait for you to see it!</p>\n<p>If there's anything specific you'd like adjusted, just reply to this email.</p>\n<br/><p>Best,</p><p><strong>The [Your Company] Team</strong></p>\n<hr style=\"border:none;border-top:1px solid #eee\"/>\n<p style=\"font-size:11px;color:#999\">You're receiving this because you have an active project with us.</p>\n</body></html>",
+        "attachment": {}
+      },
+      "id": "REDACTED",
+      "name": "Send T+5 Update Email",
+      "type": "REDACTED",
+      "typeVersion": 1,
+      "position": [
+        224,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "mailagent": "555046c28339d27e",
+        "fromaddress": {
+          "address": "noreply@thinksage.in",
+          "name": "Think Sage"
+        },
+        "toaddress": "={{ $json['Email'] }}",
+        "subject": "={{ $json['original_subject'] }}",
+        "htmlbody": "=<html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;color:#333\">\n<h2 style=\"color:#27ae60\">Hi {{ $json['Customer Name'] }}, your project is complete! </h2>\n<p>We're thrilled to let you know that your <strong>{{ $json['Project Type'] }}</strong> project has been finalized and delivered. It was a pleasure working with you!</p>\n<p>We'd love to hear your thoughts - it only takes 1 minute and helps us serve our clients better.</p>\n<div style=\"text-align:center;margin:30px 0\">\n<a href=\"YOUR_FEEDBACK_FORM_LINK\" style=\"background-color:#27ae60;color:white;padding:14px 28px;text-decoration:none;border-radius:6px;font-size:16px;font-weight:bold\"> Leave Your Feedback</a>\n</div>\n<p>Thank you for trusting us with your career journey! </p>\n<br/><p>With gratitude,</p><p><strong>The [Your Company] Team</strong></p>\n<hr style=\"border:none;border-top:1px solid #eee\"/>\n<p style=\"font-size:11px;color:#999\">Reply to this email if you have any questions about your deliverable.</p>\n</body></html>",
+        "attachment": {}
+      },
+      "id": "REDACTED",
+      "name": "Send Feedback Request Email",
+      "type": "REDACTED",
+      "typeVersion": 1,
+      "position": [
+        224,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "mailagent": "555046c28339d27e",
+        "fromaddress": {
+          "address": "noreply@thinksage.in",
+          "name": "Think Sage"
+        },
+        "toaddress": "={{ $json['Email'] }}",
+        "subject": "={{ $json['original_subject'] }}",
+        "htmlbody": "=<html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;color:#333\">\n<h2 style=\"color:#8e44ad\">Hi {{ $json['Customer Name'] }},</h2>\n<p>It's been a few days since we wrapped up your <strong>{{ $json['Project Type'] }}</strong> project - we hope it's already opening doors for you!</p>\n<p>We wanted to share some premium services that could take your career even further:</p>\n<table style=\"width:100%;border-collapse:collapse;margin:20px 0\">\n<tr style=\"background-color:#f4f0ff\"><td style=\"padding:12px;border:1px solid #ddd;font-weight:bold\"> LinkedIn Optimization</td><td style=\"padding:12px;border:1px solid #ddd\">3x more recruiter views</td></tr>\n<tr><td style=\"padding:12px;border:1px solid #ddd;font-weight:bold\"> Cover Letter Bundle</td><td style=\"padding:12px;border:1px solid #ddd\">Custom letters for your top 5 roles</td></tr>\n<tr style=\"background-color:#f4f0ff\"><td style=\"padding:12px;border:1px solid #ddd;font-weight:bold\"> Interview Prep Session</td><td style=\"padding:12px;border:1px solid #ddd\">1-on-1 mock interview coaching</td></tr>\n<tr><td style=\"padding:12px;border:1px solid #ddd;font-weight:bold\"> Job Application Strategy</td><td style=\"padding:12px;border:1px solid #ddd\">Customized job hunt roadmap</td></tr>\n</table>\n<p>As a returning client, use code <strong>RETURN15</strong> for an exclusive <strong>15% discount</strong>. Offer valid for 7 days.</p>\n<div style=\"text-align:center;margin:30px 0\">\n<a href=\"YOUR_BOOKING_LINK\" style=\"background-color:#8e44ad;color:white;padding:14px 28px;text-decoration:none;border-radius:6px;font-size:16px;font-weight:bold\"> Explore Premium Services</a>\n</div>\n<br/><p>Cheering you on,</p><p><strong>The [Your Company] Team</strong></p>\n<hr style=\"border:none;border-top:1px solid #eee\"/>\n<p style=\"font-size:11px;color:#999\">To unsubscribe, reply with 'Unsubscribe'.</p>\n</body></html>",
+        "attachment": {}
+      },
+      "id": "REDACTED",
+      "name": "Send Upsell Email1",
+      "type": "REDACTED",
+      "typeVersion": 1,
+      "position": [
+        224,
+        864
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read All Customer Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read All Customer Rows": {
+      "main": [
+        [
+          {
+            "node": "Filter Empty Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Empty Rows": {
+      "main": [
+        [
+          {
+            "node": "Calculate Date Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Date Variables": {
+      "main": [
+        [
+          {
+            "node": "Is T+3 Email Due?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is T+5 Email Due?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Feedback Email Due?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Upsell Email Due?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is T+3 Email Due?": {
+      "main": [
+        [
+          {
+            "node": "Loop T+3 (1 at a time)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop T+3 (1 at a time)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait (T+3)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait (T+3)": {
+      "main": [
+        [
+          {
+            "node": "Send T+3 Update Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark T+3 Email Sent": {
+      "main": [
+        [
+          {
+            "node": "Loop T+3 (1 at a time)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is T+5 Email Due?": {
+      "main": [
+        [
+          {
+            "node": "Loop T+5 (1 at a time)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop T+5 (1 at a time)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait (T+5)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait (T+5)": {
+      "main": [
+        [
+          {
+            "node": "Send T+5 Update Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark T+5 Email Sent": {
+      "main": [
+        [
+          {
+            "node": "Loop T+5 (1 at a time)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Feedback Email Due?": {
+      "main": [
+        [
+          {
+            "node": "Loop Feedback (1 at a time)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Feedback (1 at a time)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait (Feedback)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait (Feedback)": {
+      "main": [
+        [
+          {
+            "node": "Send Feedback Request Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Feedback Email Sent": {
+      "main": [
+        [
+          {
+            "node": "Loop Feedback (1 at a time)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Upsell Email Due?": {
+      "main": [
+        [
+          {
+            "node": "Loop Upsell (1 at a time)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Upsell (1 at a time)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait (Upsell)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait (Upsell)": {
+      "main": [
+        [
+          {
+            "node": "Send Upsell Email1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Upsell Email Sent": {
+      "main": [
+        [
+          {
+            "node": "Loop Upsell (1 at a time)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send T+3 Update Email": {
+      "main": [
+        [
+          {
+            "node": "Mark T+3 Email Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send T+5 Update Email": {
+      "main": [
+        [
+          {
+            "node": "Mark T+5 Email Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Feedback Request Email": {
+      "main": [
+        [
+          {
+            "node": "Mark Feedback Email Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Upsell Email1": {
+      "main": [
+        [
+          {
+            "node": "Mark Upsell Email Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "saveManualExecutions": false,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timezone": "Asia/Kolkata"
+  },
+  "tags": []
+}
